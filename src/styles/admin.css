@@ -892,3 +892,10 @@ textarea {
   pointer-events: none;
 }
 
+/* Drag and Drop Drop-target Highlight */
+.draggable-card.drag-over {
+  border-top: 2px dashed var(--accent) !important;
+  transform: translateY(2px);
+  box-shadow: 0 -4px 12px rgba(212, 168, 83, 0.15);
+}
+

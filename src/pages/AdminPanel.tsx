@@ -46,7 +46,9 @@ export default function AdminPanel() {
   const [settings, setSettings] = useState<Settings | null>(null);
 
   const [draggedServiceIndex, setDraggedServiceIndex] = useState<number | null>(null);
+  const [draggedOverServiceIndex, setDraggedOverServiceIndex] = useState<number | null>(null);
   const [draggedFaqIndex, setDraggedFaqIndex] = useState<number | null>(null);
+  const [draggedOverFaqIndex, setDraggedOverFaqIndex] = useState<number | null>(null);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -132,21 +134,24 @@ export default function AdminPanel() {
     setDraggedServiceIndex(index);
   }
 
-  function handleServiceDragOver(e: React.DragEvent, hoverIndex: number) {
+  function handleServiceDragOver(e: React.DragEvent, index: number) {
     e.preventDefault();
-    if (draggedServiceIndex === null || draggedServiceIndex === hoverIndex) return;
+    if (draggedServiceIndex === index) return;
+    setDraggedOverServiceIndex(index);
+  }
 
+  function handleServiceDrop(index: number) {
+    if (draggedServiceIndex === null) return;
     const updated = [...services];
-    const draggedItem = updated[draggedServiceIndex];
-    updated.splice(draggedServiceIndex, 1);
-    updated.splice(hoverIndex, 0, draggedItem);
-
+    const [draggedItem] = updated.splice(draggedServiceIndex, 1);
+    updated.splice(index, 0, draggedItem);
     const reordered = updated.map((item, idx) => ({
       ...item,
       sort_order: idx + 1
     }));
     setServices(reordered);
-    setDraggedServiceIndex(hoverIndex);
+    setDraggedServiceIndex(null);
+    setDraggedOverServiceIndex(null);
   }
 
   // Drag and Drop for FAQs
@@ -154,21 +159,24 @@ export default function AdminPanel() {
     setDraggedFaqIndex(index);
   }
 
-  function handleFaqDragOver(e: React.DragEvent, hoverIndex: number) {
+  function handleFaqDragOver(e: React.DragEvent, index: number) {
     e.preventDefault();
-    if (draggedFaqIndex === null || draggedFaqIndex === hoverIndex) return;
+    if (draggedFaqIndex === index) return;
+    setDraggedOverFaqIndex(index);
+  }
 
+  function handleFaqDrop(index: number) {
+    if (draggedFaqIndex === null) return;
     const updated = [...faqs];
-    const draggedItem = updated[draggedFaqIndex];
-    updated.splice(draggedFaqIndex, 1);
-    updated.splice(hoverIndex, 0, draggedItem);
-
+    const [draggedItem] = updated.splice(draggedFaqIndex, 1);
+    updated.splice(index, 0, draggedItem);
     const reordered = updated.map((item, idx) => ({
       ...item,
       sort_order: idx + 1
     }));
     setFaqs(reordered);
-    setDraggedFaqIndex(hoverIndex);
+    setDraggedFaqIndex(null);
+    setDraggedOverFaqIndex(null);
   }
 
   useEffect(() => {
@@ -660,7 +668,7 @@ export default function AdminPanel() {
                   {services.map((svc, index) => (
                     <div
                       key={svc.id}
-                      className={`draggable-card ${draggedServiceIndex === index ? 'dragging' : ''}`}
+                      className={`draggable-card ${draggedServiceIndex === index ? 'dragging' : ''} ${draggedOverServiceIndex === index ? 'drag-over' : ''}`}
                       draggable
                       onDragStart={(e) => {
                         const target = e.target as HTMLElement;
@@ -671,8 +679,12 @@ export default function AdminPanel() {
                         handleServiceDragStart(index);
                       }}
                       onDragOver={(e) => handleServiceDragOver(e, index)}
-                      onDragEnd={() => setDraggedServiceIndex(null)}
-                      onDrop={() => setDraggedServiceIndex(null)}
+                      onDragLeave={() => setDraggedOverServiceIndex(null)}
+                      onDrop={() => handleServiceDrop(index)}
+                      onDragEnd={() => {
+                        setDraggedServiceIndex(null);
+                        setDraggedOverServiceIndex(null);
+                      }}
                     >
                       <div className="drag-handle">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
@@ -770,7 +782,7 @@ export default function AdminPanel() {
                   {faqs.map((faq, index) => (
                     <div
                       key={faq.id}
-                      className={`draggable-card ${draggedFaqIndex === index ? 'dragging' : ''}`}
+                      className={`draggable-card ${draggedFaqIndex === index ? 'dragging' : ''} ${draggedOverFaqIndex === index ? 'drag-over' : ''}`}
                       draggable
                       onDragStart={(e) => {
                         const target = e.target as HTMLElement;
@@ -781,8 +793,12 @@ export default function AdminPanel() {
                         handleFaqDragStart(index);
                       }}
                       onDragOver={(e) => handleFaqDragOver(e, index)}
-                      onDragEnd={() => setDraggedFaqIndex(null)}
-                      onDrop={() => setDraggedFaqIndex(null)}
+                      onDragLeave={() => setDraggedOverFaqIndex(null)}
+                      onDrop={() => handleFaqDrop(index)}
+                      onDragEnd={() => {
+                        setDraggedFaqIndex(null);
+                        setDraggedOverFaqIndex(null);
+                      }}
                     >
                       <div className="drag-handle">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
