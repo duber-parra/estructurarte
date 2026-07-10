@@ -525,15 +525,48 @@ export function BottomNav() {
 // Footer
 export function Footer() {
   return (
-    <footer>
-      <div className="fl">ESTRUC<span>T</span>URARTE</div>
-      <ul className="flinks">
-        <li><a href="#services">Servicios</a></li>
-        <li><a href="#diferencial">Diferencial</a></li>
-        <li><a href="#faq">FAQ</a></li>
-        <li><a href="#/admin">Admin</a></li>
-      </ul>
-      <div className="fc">© 2025 Estructurarte · NSR-10 · Colombia</div>
+    <footer className="footer-v2">
+      <div className="footer-grid">
+        <div className="footer-brand">
+          <div className="fl">ESTRUC<span>T</span>URARTE</div>
+          <p className="footer-tagline">Ingeniería estructural rápida, limpia y legal que hace viable tu construcción metálica.</p>
+        </div>
+        
+        <div className="footer-col">
+          <h4>Navegación</h4>
+          <ul>
+            <li><a href="#services">Servicios</a></li>
+            <li><a href="#diferencial">Diferencial</a></li>
+            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#/admin">Admin</a></li>
+          </ul>
+        </div>
+        
+        <div className="footer-col">
+          <h4>Contacto</h4>
+          <ul className="footer-contact">
+            <li>Tel: +57 321 4502246</li>
+            <li>
+              <a href="https://wa.me/573163195050" target="_blank" rel="noopener noreferrer">
+                WhatsApp: +57 316 319 5050
+              </a>
+            </li>
+            <li>Email: contacto@estructurarte.co</li>
+          </ul>
+        </div>
+        
+        <div className="footer-col">
+          <div className="footer-allied-text">Alianza de Diseño</div>
+          <a href="https://wa.me/573163195050" target="_blank" rel="noopener noreferrer" className="footer-deko" aria-label="Contactar a Deko Parra por WhatsApp">
+            <img src="https://res.cloudinary.com/dm75skole/image/upload/v1777624835/Logo_Duber_zhagkk.png" alt="Duber Parra Diseño Integral" className="h-12 w-auto object-contain brightness-0 invert hover:opacity-80 transition-opacity" loading="lazy" decoding="async" />
+          </a>
+        </div>
+      </div>
+      
+      <div className="footer-bottom">
+        <div className="fc">© 2026 Estructurarte · NSR-10 · Colombia</div>
+        <div className="footer-credit">Diseñado por <span>Duber Parra</span></div>
+      </div>
     </footer>
   );
 }

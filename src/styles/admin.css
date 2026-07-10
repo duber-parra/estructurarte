@@ -584,3 +584,159 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+/* New Modern Button Styles */
+.add-item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem;
+  background: transparent;
+  border: 1.5px dashed var(--border2);
+  border-radius: var(--r);
+  color: var(--accent);
+  font-family: var(--FM);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+}
+
+.add-item-btn:hover {
+  border-color: var(--accent);
+  background: rgba(212, 168, 83, 0.03);
+  transform: translateY(-2px);
+}
+
+.add-item-btn:active {
+  transform: translateY(0);
+}
+
+.upload-custom-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: var(--FM);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.55rem 1.1rem;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  margin-top: 0.8rem;
+}
+
+.upload-custom-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(212, 168, 83, 0.05);
+}
+
+/* Drag and Drop layout styles */
+.draggable-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  position: relative;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.draggable-card.dragging {
+  opacity: 0.4;
+  border-style: dashed;
+  border-color: var(--accent);
+}
+
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--dim);
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+  margin-top: 1rem;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: var(--accent);
+}
+
+.drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.draggable-card-content {
+  flex: 1;
+}
+
+/* Theme / Color panel classes */
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.theme-presets {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
+}
+
+.theme-preset-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--r);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s var(--ease);
+}
+
+.theme-preset-btn:hover {
+  border-color: var(--accent);
+  background: rgba(212, 168, 83, 0.05);
+}
+
+.theme-color-input {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.8rem;
+  border-radius: var(--r);
+}
+
+.theme-color-hex {
+  font-family: var(--FM);
+  font-size: 0.85rem;
+}
+

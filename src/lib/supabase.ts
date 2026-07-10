@@ -68,3 +68,13 @@ export interface SEO {
   og_image_url: string;
   updated_at: string;
 }
+
+export interface Settings {
+  id: string;
+  primary_color: string;
+  secondary_color: string;
+  bg_color?: string;
+  text_color?: string;
+  updated_at: string;
+}
+

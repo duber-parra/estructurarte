@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase, Hero, Service, Engineer, FAQ, Image, Contact, SEO } from '../lib/supabase';
+import { supabase, Hero, Service, Engineer, FAQ, Image, Contact, SEO, Settings } from '../lib/supabase';
 import Navigation from '../components/landing/Navigation';
 import HeroSection from '../components/landing/HeroSection';
 import TickerBand from '../components/landing/TickerBand';
@@ -23,11 +23,19 @@ export default function LandingPage() {
   const [images, setImages] = useState<Image[]>([]);
   const [contact, setContact] = useState<Contact | null>(null);
   const [seo, setSeo] = useState<SEO | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (settings) {
+      document.documentElement.style.setProperty('--accent', settings.primary_color);
+      document.documentElement.style.setProperty('--steel', settings.secondary_color);
+    }
+  }, [settings]);
 
   useEffect(() => {
     if (!loaded) return;
@@ -51,7 +59,7 @@ export default function LandingPage() {
 
   async function loadData() {
     try {
-      const [heroRes, servicesRes, engineerRes, faqsRes, imagesRes, contactRes, seoRes] = await Promise.all([
+      const [heroRes, servicesRes, engineerRes, faqsRes, imagesRes, contactRes, seoRes, settingsRes] = await Promise.all([
         supabase.from('cms_hero').select('*').maybeSingle(),
         supabase.from('cms_services').select('*').order('sort_order'),
         supabase.from('cms_engineer').select('*').maybeSingle(),
@@ -59,6 +67,7 @@ export default function LandingPage() {
         supabase.from('cms_images').select('*').order('sort_order'),
         supabase.from('cms_contact').select('*').maybeSingle(),
         supabase.from('cms_seo').select('*').maybeSingle(),
+        supabase.from('cms_settings').select('*').maybeSingle(),
       ]);
 
       if (heroRes.data) setHero(heroRes.data);
@@ -68,6 +77,22 @@ export default function LandingPage() {
       if (imagesRes.data) setImages(imagesRes.data);
       if (contactRes.data) setContact(contactRes.data);
       if (seoRes.data) setSeo(seoRes.data);
+
+      let finalSettings = settingsRes.data;
+      if (!finalSettings) {
+        const local = localStorage.getItem('estructurarte_settings');
+        if (local) {
+          finalSettings = JSON.parse(local);
+        } else {
+          finalSettings = {
+            id: 'local',
+            primary_color: '#d4a853',
+            secondary_color: '#1e2530',
+            updated_at: new Date().toISOString()
+          };
+        }
+      }
+      setSettings(finalSettings);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -96,7 +121,7 @@ export default function LandingPage() {
       setMeta('og:title', seo.title, 'property');
       setMeta('twitter:title', seo.title);
     }
-    const ogImage = seo.og_image_url || '/image.png';
+    const ogImage = seo.og_image_url || 'https://i.postimg.cc/JnWGtMmK/Cn-P-09072026-232507.png';
     setMeta('og:image', ogImage, 'property');
     setMeta('twitter:image', ogImage);
   }, [seo]);

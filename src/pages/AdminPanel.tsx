@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase, Hero, Service, Engineer, FAQ, Image, Contact, SEO } from '../lib/supabase';
+import { supabase, Hero, Service, Engineer, FAQ, Image, Contact, SEO, Settings } from '../lib/supabase';
+import HtmlTextarea from '../components/HtmlTextarea';
 import '../styles/admin.css';
 
 function compressImage(file: File, maxW: number, maxH: number, quality = 0.82): Promise<Blob> {
@@ -42,13 +43,24 @@ export default function AdminPanel() {
   const [images, setImages] = useState<Image[]>([]);
   const [contact, setContact] = useState<Contact | null>(null);
   const [seo, setSeo] = useState<SEO | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
+
+  const [draggedServiceIndex, setDraggedServiceIndex] = useState<number | null>(null);
+  const [draggedFaqIndex, setDraggedFaqIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (settings) {
+      document.documentElement.style.setProperty('--accent', settings.primary_color);
+      document.documentElement.style.setProperty('--steel', settings.secondary_color);
+    }
+  }, [settings]);
 
   useEffect(() => {
     loadData();
   }, []);
 
   async function loadData() {
-    const [heroRes, servicesRes, engineerRes, faqsRes, imagesRes, contactRes, seoRes] = await Promise.all([
+    const [heroRes, servicesRes, engineerRes, faqsRes, imagesRes, contactRes, seoRes, settingsRes] = await Promise.all([
       supabase.from('cms_hero').select('*').maybeSingle(),
       supabase.from('cms_services').select('*').order('sort_order'),
       supabase.from('cms_engineer').select('*').maybeSingle(),
@@ -56,6 +68,7 @@ export default function AdminPanel() {
       supabase.from('cms_images').select('*').order('sort_order'),
       supabase.from('cms_contact').select('*').maybeSingle(),
       supabase.from('cms_seo').select('*').maybeSingle(),
+      supabase.from('cms_settings').select('*').maybeSingle(),
     ]);
 
     if (heroRes.data) setHero(heroRes.data);
@@ -66,6 +79,22 @@ export default function AdminPanel() {
     if (contactRes.data) setContact(contactRes.data);
     if (seoRes.data) setSeo(seoRes.data);
 
+    let finalSettings = settingsRes.data;
+    if (!finalSettings) {
+      const local = localStorage.getItem('estructurarte_settings');
+      if (local) {
+        finalSettings = JSON.parse(local);
+      } else {
+        finalSettings = {
+          id: 'local',
+          primary_color: '#d4a853',
+          secondary_color: '#1e2530',
+          updated_at: new Date().toISOString()
+        };
+      }
+    }
+    setSettings(finalSettings);
+
     setLoadedData({
       hero: heroRes.data,
       services: servicesRes.data,
@@ -73,6 +102,7 @@ export default function AdminPanel() {
       faqs: faqsRes.data,
       contact: contactRes.data,
       seo: seoRes.data,
+      settings: finalSettings,
     });
     setDirty(false);
   }
@@ -85,9 +115,54 @@ export default function AdminPanel() {
       JSON.stringify(engineer) !== JSON.stringify(loadedData.engineer) ||
       JSON.stringify(faqs) !== JSON.stringify(loadedData.faqs) ||
       JSON.stringify(contact) !== JSON.stringify(loadedData.contact) ||
-      JSON.stringify(seo) !== JSON.stringify(loadedData.seo);
+      JSON.stringify(seo) !== JSON.stringify(loadedData.seo) ||
+      JSON.stringify(settings) !== JSON.stringify(loadedData.settings);
     setDirty(changed);
-  }, [hero, services, engineer, faqs, contact, seo, loadedData]);
+  }, [hero, services, engineer, faqs, contact, seo, settings, loadedData]);
+
+  // Drag and Drop for Services
+  function handleServiceDragStart(index: number) {
+    setDraggedServiceIndex(index);
+  }
+
+  function handleServiceDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleServiceDrop(index: number) {
+    if (draggedServiceIndex === null) return;
+    const updated = [...services];
+    const [draggedItem] = updated.splice(draggedServiceIndex, 1);
+    updated.splice(index, 0, draggedItem);
+    const reordered = updated.map((item, idx) => ({
+      ...item,
+      sort_order: idx + 1
+    }));
+    setServices(reordered);
+    setDraggedServiceIndex(null);
+  }
+
+  // Drag and Drop for FAQs
+  function handleFaqDragStart(index: number) {
+    setDraggedFaqIndex(index);
+  }
+
+  function handleFaqDragOver(e: React.DragEvent) {
+    e.preventDefault();
+  }
+
+  function handleFaqDrop(index: number) {
+    if (draggedFaqIndex === null) return;
+    const updated = [...faqs];
+    const [draggedItem] = updated.splice(draggedFaqIndex, 1);
+    updated.splice(index, 0, draggedItem);
+    const reordered = updated.map((item, idx) => ({
+      ...item,
+      sort_order: idx + 1
+    }));
+    setFaqs(reordered);
+    setDraggedFaqIndex(null);
+  }
 
   useEffect(() => {
     function handleBeforeUnload(e: BeforeUnloadEvent) {
@@ -146,6 +221,22 @@ export default function AdminPanel() {
       if (error) errors.push(`SEO: ${error.message}`);
     }
 
+    if (settings) {
+      if (settings.id !== 'local') {
+        const { error } = await supabase.from('cms_settings').update({
+          primary_color: settings.primary_color,
+          secondary_color: settings.secondary_color,
+          updated_at: new Date().toISOString()
+        }).eq('id', settings.id);
+        if (error) {
+          errors.push(`Ajustes: ${error.message}`);
+          localStorage.setItem('estructurarte_settings', JSON.stringify(settings));
+        }
+      } else {
+        localStorage.setItem('estructurarte_settings', JSON.stringify(settings));
+      }
+    }
+
     for (const svc of services) {
       const { error } = await supabase.from('cms_services').update({
         name: svc.name,
@@ -173,7 +264,7 @@ export default function AdminPanel() {
     if (errors.length) {
       showToast(`⚠ ${errors[0]}`);
     } else {
-      setLoadedData({ hero, services, engineer, faqs, contact, seo });
+      setLoadedData({ hero, services, engineer, faqs, contact, seo, settings });
       showToast('✓ Cambios guardados correctamente');
     }
   }
@@ -341,6 +432,10 @@ export default function AdminPanel() {
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             SEO / Redes
           </button>
+          <button className={`sb-item ${currentPanel === 'settings' ? 'active' : ''}`} onClick={() => { setCurrentPanel('settings'); setSidebarOpen(false); }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Personalizar
+          </button>
         </nav>
         <div className="sb-bottom">
           <a href="#/" className="preview-btn">
@@ -411,11 +506,11 @@ export default function AdminPanel() {
                   placeholder="CONSTRUYE\nEN LA MITAD\nDEL TIEMPO."
                 />
                 <p className="hint">La línea del medio aparece en dorado automáticamente.</p>
-                <label>Subtítulo (acepta HTML: &lt;strong&gt;)</label>
-                <textarea
+                <HtmlTextarea
+                  label="Subtítulo (acepta HTML)"
                   rows={3}
                   value={hero.sub}
-                  onChange={(e) => setHero({ ...hero, sub: e.target.value })}
+                  onChange={(val) => setHero({ ...hero, sub: val })}
                   placeholder="La ingeniería <strong>rápida...</strong>"
                 />
               </div>
@@ -450,11 +545,11 @@ export default function AdminPanel() {
                     />
                   </div>
                 </div>
-                <label>Biografía (acepta HTML: &lt;strong&gt;)</label>
-                <textarea
+                <HtmlTextarea
+                  label="Biografía (acepta HTML)"
                   rows={4}
                   value={engineer.bio}
-                  onChange={(e) => setEngineer({ ...engineer, bio: e.target.value })}
+                  onChange={(val) => setEngineer({ ...engineer, bio: val })}
                   placeholder="Más de 15 años diseñando..."
                 />
               </div>
@@ -479,14 +574,18 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 )}
-                <div className="upload-zone">
+                <div className="upload-zone" onClick={() => document.getElementById('engineer-photo-input')?.click()}>
                   <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                   <p><strong>Subir foto del ingeniero</strong></p>
+                  <button type="button" className="upload-custom-btn" style={{ marginTop: '1rem', pointerEvents: 'none' }}>
+                    ELEGIR ARCHIVO
+                  </button>
                   <input
+                    id="engineer-photo-input"
                     type="file"
                     accept="image/*"
                     onChange={handleEngineerPhoto}
-                    style={{ marginTop: '1rem' }}
+                    style={{ display: 'none' }}
                   />
                 </div>
               </div>
@@ -516,15 +615,19 @@ export default function AdminPanel() {
                     </div>
                   ))}
                 </div>
-                <div className="upload-zone">
+                <div className="upload-zone" onClick={() => document.getElementById('portfolio-images-input')?.click()}>
                   <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   <p><strong>Subir imágenes</strong></p>
+                  <button type="button" className="upload-custom-btn" style={{ marginTop: '1rem', pointerEvents: 'none' }}>
+                    ELEGIR ARCHIVOS
+                  </button>
                   <input
+                    id="portfolio-images-input"
                     type="file"
                     accept="image/*"
                     multiple
                     onChange={handleImageUpload}
-                    style={{ marginTop: '1rem' }}
+                    style={{ display: 'none' }}
                   />
                 </div>
               </div>
@@ -537,65 +640,84 @@ export default function AdminPanel() {
               <div className="card">
                 <div className="card-title">
                   <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                  Servicios del sitio
+                  Servicios del sitio (Arrastra para reordenar)
                 </div>
-                {services.map((svc) => (
-                  <div key={svc.id} className="card" style={{ marginBottom: '1rem', borderLeft: '3px solid var(--accent)' }}>
-                    <div className="g2">
-                      <div>
-                        <label>Nombre</label>
+                
+                <div className="drag-list">
+                  {services.map((svc, index) => (
+                    <div
+                      key={svc.id}
+                      className={`draggable-card ${draggedServiceIndex === index ? 'dragging' : ''}`}
+                      draggable
+                      onDragStart={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (!target.closest('.drag-handle')) {
+                          e.preventDefault();
+                          return;
+                        }
+                        handleServiceDragStart(index);
+                      }}
+                      onDragOver={(e) => handleServiceDragOver(e)}
+                      onDrop={() => handleServiceDrop(index)}
+                    >
+                      <div className="drag-handle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                      </div>
+                      
+                      <div className="draggable-card-content">
+                        <div className="g2">
+                          <div>
+                            <label>Nombre</label>
+                            <input
+                              type="text"
+                              value={svc.name}
+                              onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, name: e.target.value } : s))}
+                            />
+                          </div>
+                          <div>
+                            <label>Etiqueta / Tag</label>
+                            <input
+                              type="text"
+                              value={svc.tag}
+                              onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, tag: e.target.value } : s))}
+                            />
+                          </div>
+                        </div>
+                        <label>Ícono (grid, star, layers, home, file, clock)</label>
                         <input
                           type="text"
-                          value={svc.name}
-                          onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, name: e.target.value } : s))}
+                          value={svc.icon_key}
+                          onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, icon_key: e.target.value } : s))}
                         />
-                      </div>
-                      <div>
-                        <label>Etiqueta / Tag</label>
-                        <input
-                          type="text"
-                          value={svc.tag}
-                          onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, tag: e.target.value } : s))}
+                        <label>Descripción</label>
+                        <textarea
+                          rows={3}
+                          value={svc.description}
+                          onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, description: e.target.value } : s))}
                         />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--dim)', fontFamily: 'var(--FM)' }}>Posición: {svc.sort_order}</span>
+                          <button
+                            className="btn-sm"
+                            type="button"
+                            onClick={async () => {
+                              if (!confirm('¿Eliminar servicio?')) return;
+                              await supabase.from('cms_services').delete().eq('id', svc.id);
+                              setServices(services.filter(s => s.id !== svc.id).map((s, idx) => ({ ...s, sort_order: idx + 1 })));
+                            }}
+                            style={{ background: 'var(--danger)', color: '#fff', border: 'none', padding: '.4rem .8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '.75rem' }}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <label>Ícono (grid, star, layers, home, file, clock)</label>
-                    <input
-                      type="text"
-                      value={svc.icon_key}
-                      onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, icon_key: e.target.value } : s))}
-                    />
-                    <label>Descripción</label>
-                    <textarea
-                      rows={3}
-                      value={svc.description}
-                      onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, description: e.target.value } : s))}
-                    />
-                    <div className="g2" style={{ marginTop: '.5rem' }}>
-                      <div>
-                        <label>Orden</label>
-                        <input
-                          type="number"
-                          value={svc.sort_order}
-                          onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, sort_order: parseInt(e.target.value) || 0 } : s))}
-                        />
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '.5rem' }}>
-                        <button
-                          className="btn-sm"
-                          onClick={async () => {
-                            await supabase.from('cms_services').delete().eq('id', svc.id);
-                            setServices(services.filter(s => s.id !== svc.id));
-                          }}
-                          style={{ background: 'var(--danger)', color: '#fff', border: 'none', padding: '.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '.75rem', whiteSpace: 'nowrap' }}
-                        >
-                          Eliminar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
                 <button
+                  type="button"
+                  className="add-item-btn"
                   onClick={async () => {
                     const newOrder = services.length > 0 ? Math.max(...services.map(s => s.sort_order)) + 1 : 1;
                     const { data } = await supabase.from('cms_services').insert({
@@ -607,7 +729,7 @@ export default function AdminPanel() {
                     }).select().single();
                     if (data) setServices([...services, data].sort((a, b) => a.sort_order - b.sort_order));
                   }}
-                  style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '.6rem 1.2rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '.8rem' }}
+                  style={{ marginTop: '1rem' }}
                 >
                   + Agregar servicio
                 </button>
@@ -621,46 +743,67 @@ export default function AdminPanel() {
               <div className="card">
                 <div className="card-title">
                   <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  Preguntas frecuentes
+                  Preguntas frecuentes (Arrastra para reordenar)
                 </div>
-                {faqs.map((faq) => (
-                  <div key={faq.id} className="card" style={{ marginBottom: '1rem', borderLeft: '3px solid var(--accent)' }}>
-                    <label>Pregunta</label>
-                    <input
-                      type="text"
-                      value={faq.question}
-                      onChange={(e) => setFaqs(faqs.map(f => f.id === faq.id ? { ...f, question: e.target.value } : f))}
-                    />
-                    <label>Respuesta (acepta HTML: &lt;strong&gt;)</label>
-                    <textarea
-                      rows={3}
-                      value={faq.answer}
-                      onChange={(e) => setFaqs(faqs.map(f => f.id === faq.id ? { ...f, answer: e.target.value } : f))}
-                    />
-                    <div className="g2" style={{ marginTop: '.5rem' }}>
-                      <div>
-                        <label>Orden</label>
-                        <input
-                          type="number"
-                          value={faq.sort_order}
-                          onChange={(e) => setFaqs(faqs.map(f => f.id === faq.id ? { ...f, sort_order: parseInt(e.target.value) || 0 } : f))}
-                        />
+                
+                <div className="drag-list">
+                  {faqs.map((faq, index) => (
+                    <div
+                      key={faq.id}
+                      className={`draggable-card ${draggedFaqIndex === index ? 'dragging' : ''}`}
+                      draggable
+                      onDragStart={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (!target.closest('.drag-handle')) {
+                          e.preventDefault();
+                          return;
+                        }
+                        handleFaqDragStart(index);
+                      }}
+                      onDragOver={(e) => handleFaqDragOver(e)}
+                      onDrop={() => handleFaqDrop(index)}
+                    >
+                      <div className="drag-handle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '.5rem' }}>
-                        <button
-                          onClick={async () => {
-                            await supabase.from('cms_faq').delete().eq('id', faq.id);
-                            setFaqs(faqs.filter(f => f.id !== faq.id));
-                          }}
-                          style={{ background: 'var(--danger)', color: '#fff', border: 'none', padding: '.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '.75rem', whiteSpace: 'nowrap' }}
-                        >
-                          Eliminar
-                        </button>
+                      
+                      <div className="draggable-card-content">
+                        <label>Pregunta</label>
+                        <input
+                          type="text"
+                          value={faq.question}
+                          onChange={(e) => setFaqs(faqs.map(f => f.id === faq.id ? { ...f, question: e.target.value } : f))}
+                          style={{ marginBottom: '1rem' }}
+                        />
+                        <HtmlTextarea
+                          label="Respuesta (acepta HTML)"
+                          rows={3}
+                          value={faq.answer}
+                          onChange={(val) => setFaqs(faqs.map(f => f.id === faq.id ? { ...f, answer: val } : f))}
+                          placeholder="Respuesta..."
+                        />
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--dim)', fontFamily: 'var(--FM)' }}>Posición: {faq.sort_order}</span>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!confirm('¿Eliminar pregunta?')) return;
+                              await supabase.from('cms_faq').delete().eq('id', faq.id);
+                              setFaqs(faqs.filter(f => f.id !== faq.id).map((f, idx) => ({ ...f, sort_order: idx + 1 })));
+                            }}
+                            style={{ background: 'var(--danger)', color: '#fff', border: 'none', padding: '.4rem .8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '.75rem' }}
+                          >
+                            Eliminar
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+
                 <button
+                  type="button"
+                  className="add-item-btn"
                   onClick={async () => {
                     const newOrder = faqs.length > 0 ? Math.max(...faqs.map(f => f.sort_order)) + 1 : 1;
                     const { data } = await supabase.from('cms_faq').insert({
@@ -670,7 +813,7 @@ export default function AdminPanel() {
                     }).select().single();
                     if (data) setFaqs([...faqs, data].sort((a, b) => a.sort_order - b.sort_order));
                   }}
-                  style={{ background: 'var(--accent)', color: '#000', border: 'none', padding: '.6rem 1.2rem', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, fontSize: '.8rem' }}
+                  style={{ marginTop: '1rem' }}
                 >
                   + Agregar pregunta
                 </button>
@@ -756,6 +899,62 @@ export default function AdminPanel() {
                   onChange={(e) => setContact({ ...contact, address: e.target.value })}
                   placeholder="Pereira, Risaralda · Colombia"
                 />
+              </div>
+            </div>
+          )}
+
+          {currentPanel === 'settings' && settings && (
+            <div className="panel active">
+              <div className="section-h"><h2>Personalización de Colores</h2></div>
+              <div className="card">
+                <div className="card-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                  Paleta de Colores del Sitio Web
+                </div>
+                <div className="theme-grid">
+                  <div>
+                    <label>Color Principal (Acentos, Títulos Destacados)</label>
+                    <div className="theme-color-input">
+                      <input
+                        type="color"
+                        value={settings.primary_color}
+                        onChange={(e) => setSettings({ ...settings, primary_color: e.target.value })}
+                      />
+                      <span className="theme-color-hex">{settings.primary_color.toUpperCase()}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label>Color Secundario (Fondo de Tarjetas, Elementos Metálicos)</label>
+                    <div className="theme-color-input">
+                      <input
+                        type="color"
+                        value={settings.secondary_color}
+                        onChange={(e) => setSettings({ ...settings, secondary_color: e.target.value })}
+                      />
+                      <span className="theme-color-hex">{settings.secondary_color.toUpperCase()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <label style={{ marginTop: '1.5rem' }}>Preajustes Rápidos</label>
+                <div className="theme-presets">
+                  {[
+                    { name: 'Dorado Industrial (Default)', primary: '#d4a853', secondary: '#1e2530' },
+                    { name: 'Azul Acero Moderno', primary: '#4a9eff', secondary: '#162235' },
+                    { name: 'Verde NSR-10 Eco', primary: '#3dd68c', secondary: '#12261e' },
+                    { name: 'Naranja Obra Limpia', primary: '#e05c3a', secondary: '#241a16' }
+                  ].map((preset, index) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setSettings({ ...settings, primary_color: preset.primary, secondary_color: preset.secondary })}
+                      className="theme-preset-btn"
+                    >
+                      <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: preset.primary, display: 'inline-block' }}></span>
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
