@@ -857,3 +857,38 @@ textarea {
   to { transform: translateY(0) scale(1); }
 }
 
+/* Rich HTML Editor Editable Container */
+.html-editor-editable {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-bottom-left-radius: var(--r);
+  border-bottom-right-radius: var(--r);
+  padding: 0.75rem 1rem;
+  color: var(--text);
+  font-family: var(--FM);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  outline: none;
+}
+
+.html-editor-editable:focus {
+  border-color: var(--accent);
+}
+
+.html-editor-editable ul {
+  padding-left: 1.2rem;
+  margin: 0.5rem 0;
+}
+
+.html-editor-editable li {
+  margin-bottom: 0.2rem;
+}
+
+.html-editor-editable[data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  color: var(--dim);
+  opacity: 0.65;
+  pointer-events: none;
+}
+

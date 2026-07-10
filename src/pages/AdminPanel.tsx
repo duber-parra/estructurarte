@@ -132,21 +132,21 @@ export default function AdminPanel() {
     setDraggedServiceIndex(index);
   }
 
-  function handleServiceDragOver(e: React.DragEvent) {
+  function handleServiceDragOver(e: React.DragEvent, hoverIndex: number) {
     e.preventDefault();
-  }
+    if (draggedServiceIndex === null || draggedServiceIndex === hoverIndex) return;
 
-  function handleServiceDrop(index: number) {
-    if (draggedServiceIndex === null) return;
     const updated = [...services];
-    const [draggedItem] = updated.splice(draggedServiceIndex, 1);
-    updated.splice(index, 0, draggedItem);
+    const draggedItem = updated[draggedServiceIndex];
+    updated.splice(draggedServiceIndex, 1);
+    updated.splice(hoverIndex, 0, draggedItem);
+
     const reordered = updated.map((item, idx) => ({
       ...item,
       sort_order: idx + 1
     }));
     setServices(reordered);
-    setDraggedServiceIndex(null);
+    setDraggedServiceIndex(hoverIndex);
   }
 
   // Drag and Drop for FAQs
@@ -154,21 +154,21 @@ export default function AdminPanel() {
     setDraggedFaqIndex(index);
   }
 
-  function handleFaqDragOver(e: React.DragEvent) {
+  function handleFaqDragOver(e: React.DragEvent, hoverIndex: number) {
     e.preventDefault();
-  }
+    if (draggedFaqIndex === null || draggedFaqIndex === hoverIndex) return;
 
-  function handleFaqDrop(index: number) {
-    if (draggedFaqIndex === null) return;
     const updated = [...faqs];
-    const [draggedItem] = updated.splice(draggedFaqIndex, 1);
-    updated.splice(index, 0, draggedItem);
+    const draggedItem = updated[draggedFaqIndex];
+    updated.splice(draggedFaqIndex, 1);
+    updated.splice(hoverIndex, 0, draggedItem);
+
     const reordered = updated.map((item, idx) => ({
       ...item,
       sort_order: idx + 1
     }));
     setFaqs(reordered);
-    setDraggedFaqIndex(null);
+    setDraggedFaqIndex(hoverIndex);
   }
 
   useEffect(() => {
@@ -670,8 +670,9 @@ export default function AdminPanel() {
                         }
                         handleServiceDragStart(index);
                       }}
-                      onDragOver={(e) => handleServiceDragOver(e)}
-                      onDrop={() => handleServiceDrop(index)}
+                      onDragOver={(e) => handleServiceDragOver(e, index)}
+                      onDragEnd={() => setDraggedServiceIndex(null)}
+                      onDrop={() => setDraggedServiceIndex(null)}
                     >
                       <div className="drag-handle">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
@@ -779,8 +780,9 @@ export default function AdminPanel() {
                         }
                         handleFaqDragStart(index);
                       }}
-                      onDragOver={(e) => handleFaqDragOver(e)}
-                      onDrop={() => handleFaqDrop(index)}
+                      onDragOver={(e) => handleFaqDragOver(e, index)}
+                      onDragEnd={() => setDraggedFaqIndex(null)}
+                      onDrop={() => setDraggedFaqIndex(null)}
                     >
                       <div className="drag-handle">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>

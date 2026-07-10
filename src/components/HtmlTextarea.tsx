@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface HtmlTextareaProps {
   value: string;
@@ -9,8 +9,31 @@ interface HtmlTextareaProps {
 }
 
 export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, label }: HtmlTextareaProps) {
+  const [mode, setMode] = useState<'visual' | 'code'>('visual');
   const [showHelp, setShowHelp] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const editableRef = useRef<HTMLDivElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+
+  // Sync value to editable div only when not focused to avoid cursor reset
+  useEffect(() => {
+    if (editableRef.current && !isFocused) {
+      editableRef.current.innerHTML = value || '';
+    }
+  }, [value, isFocused]);
+
+  function handleEditableInput(e: React.FormEvent<HTMLDivElement>) {
+    const html = e.currentTarget.innerHTML;
+    // Keep raw value in sync
+    onChange(html === '<br>' ? '' : html);
+  }
+
+  function executeCommand(command: string, arg: string = '') {
+    document.execCommand(command, false, arg);
+    if (editableRef.current) {
+      onChange(editableRef.current.innerHTML);
+    }
+  }
 
   function insertTag(openTag: string, closeTag: string) {
     const textarea = textareaRef.current;
@@ -26,7 +49,6 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
     const newValue = text.substring(0, start) + replacement + text.substring(end);
     onChange(newValue);
 
-    // Reposition cursor after state update
     setTimeout(() => {
       textarea.focus();
       const newCursorPos = start + openTag.length + selectedText.length + closeTag.length;
@@ -36,9 +58,58 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
 
   return (
     <div className="html-textarea-container" style={{ marginBottom: '1.25rem' }}>
-      {label && <label style={{ display: 'flex', justifyContent: 'between', alignItems: 'center' }}>
-        <span>{label}</span>
-      </label>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+        {label && <label style={{ margin: 0 }}>{label}</label>}
+        
+        {/* Editor Mode Tabs */}
+        <div style={{
+          display: 'flex',
+          background: 'var(--bg4)',
+          border: '1px solid var(--border)',
+          borderRadius: '6px',
+          padding: '2px',
+          gap: '2px'
+        }}>
+          <button
+            type="button"
+            onClick={() => setMode('visual')}
+            style={{
+              background: mode === 'visual' ? 'var(--accent)' : 'transparent',
+              color: mode === 'visual' ? '#000' : 'var(--dim)',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '0.2rem 0.6rem',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            Visual
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('code')}
+            style={{
+              background: mode === 'code' ? 'var(--accent)' : 'transparent',
+              color: mode === 'code' ? '#000' : 'var(--dim)',
+              border: 'none',
+              borderRadius: '4px',
+              padding: '0.2rem 0.6rem',
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            Código HTML
+          </button>
+        </div>
+      </div>
 
       {/* Toolbar */}
       <div className="html-toolbar" style={{
@@ -56,7 +127,7 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
         <div style={{ display: 'flex', gap: '0.35rem' }}>
           <button
             type="button"
-            onClick={() => insertTag('<strong>', '</strong>')}
+            onClick={() => mode === 'visual' ? executeCommand('bold') : insertTag('<strong>', '</strong>')}
             title="Negrita"
             className="toolbar-btn"
             style={{
@@ -74,7 +145,7 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
           </button>
           <button
             type="button"
-            onClick={() => insertTag('<em>', '</em>')}
+            onClick={() => mode === 'visual' ? executeCommand('italic') : insertTag('<em>', '</em>')}
             title="Cursiva"
             className="toolbar-btn"
             style={{
@@ -92,7 +163,7 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
           </button>
           <button
             type="button"
-            onClick={() => insertTag('<br />', '')}
+            onClick={() => mode === 'visual' ? executeCommand('insertHTML', '<br>') : insertTag('<br />', '')}
             title="Salto de Línea"
             className="toolbar-btn"
             style={{
@@ -109,8 +180,8 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
           </button>
           <button
             type="button"
-            onClick={() => insertTag('<li>', '</li>')}
-            title="Viñeta / Lista"
+            onClick={() => mode === 'visual' ? executeCommand('insertUnorderedList') : insertTag('<li>', '</li>')}
+            title="Lista / Viñeta"
             className="toolbar-btn"
             style={{
               background: 'var(--bg3)',
@@ -145,19 +216,36 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
         </button>
       </div>
 
-      {/* Textarea */}
-      <textarea
-        ref={textareaRef}
-        rows={rows}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        style={{
-          borderTopLeftRadius: 0,
-          borderTopRightRadius: 0,
-          marginTop: 0
-        }}
-      />
+      {/* Editor Content Area */}
+      {mode === 'visual' ? (
+        <div
+          ref={editableRef}
+          contentEditable
+          onInput={handleEditableInput}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          data-placeholder={placeholder}
+          className="html-editor-editable"
+          style={{
+            minHeight: `${rows * 26}px`,
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}
+        />
+      ) : (
+        <textarea
+          ref={textareaRef}
+          rows={rows}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          style={{
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            marginTop: 0
+          }}
+        />
+      )}
 
       {/* Didactic Help Panel */}
       {showHelp && (
@@ -172,25 +260,25 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
           color: 'var(--dim)'
         }}>
           <h4 style={{ color: 'var(--accent)', marginBottom: '0.5rem', fontSize: '0.8rem', fontFamily: 'var(--FM)' }}>Guía de Formato Rápido</h4>
-          <p style={{ marginBottom: '0.8rem' }}>Usa los botones superiores seleccionando primero un texto, o haz clic directamente para insertar la etiqueta:</p>
+          <p style={{ marginBottom: '0.8rem' }}>Usa los botones superiores seleccionando primero un texto para aplicar el formato:</p>
           <ul style={{ listStyle: 'none', paddingLeft: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             <li>
-              <strong style={{ color: 'var(--text)' }}>Botón B (Negrita):</strong> Inserta <code>&lt;strong&gt;texto&lt;/strong&gt;</code>. Resalta palabras clave.
-              <br /><span style={{ opacity: 0.8 }}>Resultado: <strong>Texto destacado</strong></span>
+              <strong style={{ color: 'var(--text)' }}>Botón B (Negrita):</strong> Hace que el texto seleccionado sea más grueso.
+              <br /><span style={{ opacity: 0.8 }}>Ejemplo: <strong>Texto destacado</strong></span>
             </li>
             <li>
-              <strong style={{ color: 'var(--text)' }}>Botón I (Cursiva):</strong> Inserta <code>&lt;em&gt;texto&lt;/em&gt;</code>. Ideal para aclaraciones o énfasis.
-              <br /><span style={{ opacity: 0.8 }}>Resultado: <em>Texto inclinado</em></span>
+              <strong style={{ color: 'var(--text)' }}>Botón I (Cursiva):</strong> Inclina el texto seleccionado para dar énfasis.
+              <br /><span style={{ opacity: 0.8 }}>Ejemplo: <em>Texto inclinado</em></span>
             </li>
             <li>
-              <strong style={{ color: 'var(--text)' }}>Botón ↵ (Salto de línea):</strong> Inserta <code>&lt;br /&gt;</code>. Pasa el texto a la siguiente línea.
+              <strong style={{ color: 'var(--text)' }}>Botón ↵ (Salto de línea):</strong> Pasa el texto al siguiente renglón.
             </li>
             <li>
-              <strong style={{ color: 'var(--text)' }}>Botón • (Lista / Viñeta):</strong> Inserta <code>&lt;li&gt;elemento&lt;/li&gt;</code>. Úsalo para crear listas de beneficios.
+              <strong style={{ color: 'var(--text)' }}>Botón • (Lista / Viñeta):</strong> Crea una lista ordenada por puntos para enumerar beneficios o elementos.
             </li>
           </ul>
           <div style={{ marginTop: '0.8rem', paddingTop: '0.6rem', borderTop: '1px solid var(--border)', fontSize: '0.7rem' }}>
-            💡 <strong style={{ color: 'var(--text)' }}>Tip:</strong> Puedes combinar etiquetas, ej: <code>&lt;strong&gt;&lt;em&gt;texto&lt;/em&gt;&lt;/strong&gt;</code>.
+            💡 <strong style={{ color: 'var(--text)' }}>Tip:</strong> En el modo **Visual**, verás directamente el formato aplicado ocultando los códigos HTML. En el modo **Código HTML** puedes ver y editar las etiquetas en texto plano si lo deseas.
           </div>
         </div>
       )}
