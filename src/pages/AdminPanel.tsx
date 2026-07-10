@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase, Hero, Service, Engineer, FAQ, Image, Contact, SEO, Settings } from '../lib/supabase';
+import { supabase, Hero, Service, Engineer, FAQ, Image, Contact, SEO, Settings, Diferencial } from '../lib/supabase';
 import HtmlTextarea from '../components/HtmlTextarea';
 import '../styles/admin.css';
 
@@ -44,8 +44,7 @@ export default function AdminPanel() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [seo, setSeo] = useState<SEO | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
-
-
+  const [diferencial, setDiferencial] = useState<Diferencial | null>(null);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -66,7 +65,7 @@ export default function AdminPanel() {
   }, []);
 
   async function loadData() {
-    const [heroRes, servicesRes, engineerRes, faqsRes, imagesRes, contactRes, seoRes, settingsRes] = await Promise.all([
+    const [heroRes, servicesRes, engineerRes, faqsRes, imagesRes, contactRes, seoRes, settingsRes, diferencialRes] = await Promise.all([
       supabase.from('cms_hero').select('*').maybeSingle(),
       supabase.from('cms_services').select('*').order('sort_order'),
       supabase.from('cms_engineer').select('*').maybeSingle(),
@@ -75,6 +74,7 @@ export default function AdminPanel() {
       supabase.from('cms_contact').select('*').maybeSingle(),
       supabase.from('cms_seo').select('*').maybeSingle(),
       supabase.from('cms_settings').select('*').maybeSingle(),
+      supabase.from('cms_diferencial').select('*').maybeSingle(),
     ]);
 
     if (heroRes.data) setHero(heroRes.data);
@@ -84,6 +84,26 @@ export default function AdminPanel() {
     if (imagesRes.data) setImages(imagesRes.data);
     if (contactRes.data) setContact(contactRes.data);
     if (seoRes.data) setSeo(seoRes.data);
+
+    let finalDiferencial = diferencialRes.data;
+    if (!finalDiferencial) {
+      finalDiferencial = {
+        id: 'local',
+        eyebrow: 'Diferencial',
+        headline: 'CERO\nRECHAZOS.',
+        paragraph_1: 'La mayoría de los rechazos en curaduría no son por fallas de diseño. Son por <strong>desconocimiento del POT, normativa específica del predio o errores de presentación documental</strong>.',
+        paragraph_2: 'Nuestro proceso integra la revisión jurídico-urbanística desde el primer día. El ingeniero dueño actúa como <strong>estratega legal-técnico</strong>, no solo como calculista.',
+        badge_text: '0% Rechazos en Curaduría',
+        step_1_title: 'Análisis del Lote', step_1_note: 'POT · Usos · Restricciones',
+        step_2_title: 'Diseño Estructural BIM', step_2_note: 'Modelado · Optimización',
+        step_3_title: 'Memoria NSR-10', step_3_note: 'Sismo resistente · Cap. F',
+        step_4_title: 'Radicación en Curaduría', step_4_note: 'Paquete documental completo',
+        step_5_title: 'APROBADO ✓', step_5_note: 'Licencia en mano · Inicio inmediato',
+        show_section: true,
+        updated_at: new Date().toISOString()
+      };
+    }
+    setDiferencial(finalDiferencial);
 
     let finalSettings = settingsRes.data;
     if (!finalSettings) {
@@ -121,6 +141,7 @@ export default function AdminPanel() {
       contact: contactRes.data,
       seo: seoRes.data,
       settings: finalSettings,
+      diferencial: finalDiferencial
     });
     setDirty(false);
   }
@@ -134,9 +155,10 @@ export default function AdminPanel() {
       JSON.stringify(faqs) !== JSON.stringify(loadedData.faqs) ||
       JSON.stringify(contact) !== JSON.stringify(loadedData.contact) ||
       JSON.stringify(seo) !== JSON.stringify(loadedData.seo) ||
-      JSON.stringify(settings) !== JSON.stringify(loadedData.settings);
+      JSON.stringify(settings) !== JSON.stringify(loadedData.settings) ||
+      JSON.stringify(diferencial) !== JSON.stringify(loadedData.diferencial);
     setDirty(changed);
-  }, [hero, services, engineer, faqs, contact, seo, settings, loadedData]);
+  }, [hero, services, engineer, faqs, contact, seo, settings, diferencial, loadedData]);
 
   // Reordering functions for Services
   function moveService(index: number, direction: number) {
@@ -269,6 +291,31 @@ export default function AdminPanel() {
         }
       } else {
         localStorage.setItem('estructurarte_settings', JSON.stringify(settings));
+      }
+    }
+
+    if (diferencial) {
+      if (diferencial.id !== 'local') {
+        const { error } = await supabase.from('cms_diferencial').update({
+          eyebrow: diferencial.eyebrow,
+          headline: diferencial.headline,
+          paragraph_1: diferencial.paragraph_1,
+          paragraph_2: diferencial.paragraph_2,
+          badge_text: diferencial.badge_text,
+          step_1_title: diferencial.step_1_title,
+          step_1_note: diferencial.step_1_note,
+          step_2_title: diferencial.step_2_title,
+          step_2_note: diferencial.step_2_note,
+          step_3_title: diferencial.step_3_title,
+          step_3_note: diferencial.step_3_note,
+          step_4_title: diferencial.step_4_title,
+          step_4_note: diferencial.step_4_note,
+          step_5_title: diferencial.step_5_title,
+          step_5_note: diferencial.step_5_note,
+          show_section: diferencial.show_section,
+          updated_at: new Date().toISOString()
+        }).eq('id', diferencial.id);
+        if (error) errors.push(`Diferencial: ${error.message}`);
       }
     }
 
@@ -448,6 +495,10 @@ export default function AdminPanel() {
             <svg viewBox="0 0 24 24"><polyline points="23 7 13.5 15.5 8.5 10.5 1 17"/><polyline points="17 7 23 7 23 13"/></svg>
             Hero / Portada
           </button>
+          <button className={`sb-item ${currentPanel === 'diferencial' ? 'active' : ''}`} onClick={() => { setCurrentPanel('diferencial'); setSidebarOpen(false); }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Diferencial
+          </button>
           <button className={`sb-item ${currentPanel === 'engineer' ? 'active' : ''}`} onClick={() => { setCurrentPanel('engineer'); setSidebarOpen(false); }}>
             <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             Ingeniero
@@ -554,6 +605,189 @@ export default function AdminPanel() {
                   onChange={(val) => setHero({ ...hero, sub: val })}
                   placeholder="La ingeniería <strong>rápida...</strong>"
                 />
+              </div>
+            </div>
+          )}
+
+          {currentPanel === 'diferencial' && diferencial && (
+            <div className="panel active">
+              <div className="section-h"><h2>Sección Diferencial</h2></div>
+              
+              <div className="card">
+                <div className="card-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                  Visibilidad de la Sección
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontFamily: 'var(--FM)', fontSize: '0.85rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={diferencial.show_section}
+                    onChange={(e) => setDiferencial({ ...diferencial, show_section: e.target.checked })}
+                    style={{ width: 'auto', margin: 0 }}
+                  />
+                  Mostrar sección "Diferencial" en el sitio público
+                </label>
+              </div>
+
+              <div className="card" style={{ marginTop: '1.25rem' }}>
+                <div className="card-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Textos Principales
+                </div>
+                <label>Subtítulo / Eyebrow</label>
+                <input
+                  type="text"
+                  value={diferencial.eyebrow}
+                  onChange={(e) => setDiferencial({ ...diferencial, eyebrow: e.target.value })}
+                  placeholder="Diferencial"
+                />
+                <label>Título (usa saltos de línea \n o enter)</label>
+                <textarea
+                  rows={2}
+                  value={diferencial.headline}
+                  onChange={(e) => setDiferencial({ ...diferencial, headline: e.target.value })}
+                  placeholder="CERO&#10;RECHAZOS."
+                />
+                <HtmlTextarea
+                  label="Párrafo 1 (acepta HTML)"
+                  rows={3}
+                  value={diferencial.paragraph_1}
+                  onChange={(val) => setDiferencial({ ...diferencial, paragraph_1: val })}
+                  placeholder="La mayoría de los rechazos..."
+                />
+                <HtmlTextarea
+                  label="Párrafo 2 (acepta HTML)"
+                  rows={3}
+                  value={diferencial.paragraph_2}
+                  onChange={(val) => setDiferencial({ ...diferencial, paragraph_2: val })}
+                  placeholder="Nuestro proceso integra..."
+                />
+                <label>Texto de la Placa / Insignia</label>
+                <input
+                  type="text"
+                  value={diferencial.badge_text}
+                  onChange={(e) => setDiferencial({ ...diferencial, badge_text: e.target.value })}
+                  placeholder="0% Rechazos en Curaduría"
+                />
+              </div>
+
+              <div className="card" style={{ marginTop: '1.25rem' }}>
+                <div className="card-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  Línea de Tiempo (5 Pasos)
+                </div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                    <h4 style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: '0.5rem', fontFamily: 'var(--FM)' }}>Paso 1</h4>
+                    <div className="g2">
+                      <div>
+                        <label>Título</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_1_title}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_1_title: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label>Subtexto / Nota</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_1_note}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_1_note: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                    <h4 style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: '0.5rem', fontFamily: 'var(--FM)' }}>Paso 2</h4>
+                    <div className="g2">
+                      <div>
+                        <label>Título</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_2_title}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_2_title: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label>Subtexto / Nota</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_2_note}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_2_note: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                    <h4 style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: '0.5rem', fontFamily: 'var(--FM)' }}>Paso 3</h4>
+                    <div className="g2">
+                      <div>
+                        <label>Título</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_3_title}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_3_title: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label>Subtexto / Nota</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_3_note}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_3_note: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+                    <h4 style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: '0.5rem', fontFamily: 'var(--FM)' }}>Paso 4</h4>
+                    <div className="g2">
+                      <div>
+                        <label>Título</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_4_title}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_4_title: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label>Subtexto / Nota</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_4_note}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_4_note: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 style={{ color: 'var(--accent)', fontSize: '0.8rem', marginBottom: '0.5rem', fontFamily: 'var(--FM)' }}>Paso 5 (Aprobado)</h4>
+                    <div className="g2">
+                      <div>
+                        <label>Título</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_5_title}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_5_title: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <label>Subtexto / Nota</label>
+                        <input
+                          type="text"
+                          value={diferencial.step_5_note}
+                          onChange={(e) => setDiferencial({ ...diferencial, step_5_note: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

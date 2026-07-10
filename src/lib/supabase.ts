@@ -83,3 +83,24 @@ export interface Settings {
   updated_at: string;
 }
 
+export interface Diferencial {
+  id: string;
+  eyebrow: string;
+  headline: string;
+  paragraph_1: string;
+  paragraph_2: string;
+  badge_text: string;
+  step_1_title: string;
+  step_1_note: string;
+  step_2_title: string;
+  step_2_note: string;
+  step_3_title: string;
+  step_3_note: string;
+  step_4_title: string;
+  step_4_note: string;
+  step_5_title: string;
+  step_5_note: string;
+  show_section: boolean;
+  updated_at: string;
+}
+

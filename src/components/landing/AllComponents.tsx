@@ -1,4 +1,4 @@
-import { Hero, Service, Engineer, FAQ, Image, Contact, Settings } from '../../lib/supabase';
+import { Hero, Service, Engineer, FAQ, Image, Contact, Settings, Diferencial } from '../../lib/supabase';
 import { useState, useEffect, useRef } from 'react';
 
 // Hero Section
@@ -239,63 +239,72 @@ export function CopySection() {
 }
 
 // Diferencial Section
-export function DiferencialSection() {
+export function DiferencialSection({ diferencial }: { diferencial: Diferencial | null }) {
+  const headlineLines = diferencial?.headline?.split('\n') || ['CERO', 'RECHAZOS.'];
+  
   return (
     <section id="diferencial">
-      <div className="sl fu">Diferencial</div>
-      <h2 className="st fu d1">CERO<br/>RECHAZOS.</h2>
+      <div className="sl fu">{diferencial?.eyebrow || 'Diferencial'}</div>
+      <h2 className="st fu d1">
+        {headlineLines.map((line, i) => (
+          <span key={i}>
+            {line}
+            {i < headlineLines.length - 1 && <br />}
+          </span>
+        ))}
+      </h2>
       <div className="diff-grid">
         <div className="diff-text fu d2">
-          <p>
-            La mayoría de los rechazos en curaduría no son por fallas de diseño. Son por{' '}
-            <strong>desconocimiento del POT, normativa específica del predio o errores de presentación documental</strong>.
-          </p>
-          <p>
-            Nuestro proceso integra la revisión jurídico-urbanística desde el primer día. El ingeniero dueño actúa como{' '}
-            <strong>estratega legal-técnico</strong>, no solo como calculista.
-          </p>
-          <div className="zero-badge">
-            <svg viewBox="0 0 24 24">
-              <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-            0% Rechazos en Curaduría
-          </div>
+          {diferencial?.paragraph_1 && (
+            <p dangerouslySetInnerHTML={{ __html: diferencial.paragraph_1 }} />
+          )}
+          {diferencial?.paragraph_2 && (
+            <p dangerouslySetInnerHTML={{ __html: diferencial.paragraph_2 }} />
+          )}
+          {diferencial?.badge_text && (
+            <div className="zero-badge">
+              <svg viewBox="0 0 24 24">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              {diferencial.badge_text}
+            </div>
+          )}
         </div>
         <div className="timeline fu d3">
           <div className="tl-step done">
             <div className="tl-dot">✓</div>
             <div className="tl-content">
-              <div className="tl-title">Análisis del Lote</div>
-              <div className="tl-note">POT · Usos · Restricciones</div>
+              <div className="tl-title">{diferencial?.step_1_title || 'Análisis del Lote'}</div>
+              <div className="tl-note">{diferencial?.step_1_note || 'POT · Usos · Restricciones'}</div>
             </div>
           </div>
           <div className="tl-step done">
             <div className="tl-dot">✓</div>
             <div className="tl-content">
-              <div className="tl-title">Diseño Estructural BIM</div>
-              <div className="tl-note">Modelado · Optimización</div>
+              <div className="tl-title">{diferencial?.step_2_title || 'Diseño Estructural BIM'}</div>
+              <div className="tl-note">{diferencial?.step_2_note || 'Modelado · Optimización'}</div>
             </div>
           </div>
           <div className="tl-step done">
             <div className="tl-dot">✓</div>
             <div className="tl-content">
-              <div className="tl-title">Memoria NSR-10</div>
-              <div className="tl-note">Sismo resistente · Cap. F</div>
+              <div className="tl-title">{diferencial?.step_3_title || 'Memoria NSR-10'}</div>
+              <div className="tl-note">{diferencial?.step_3_note || 'Sismo resistente · Cap. F'}</div>
             </div>
           </div>
           <div className="tl-step active">
             <div className="tl-dot">→</div>
             <div className="tl-content">
-              <div className="tl-title">Radicación en Curaduría</div>
-              <div className="tl-note">Paquete documental completo</div>
+              <div className="tl-title">{diferencial?.step_4_title || 'Radicación en Curaduría'}</div>
+              <div className="tl-note">{diferencial?.step_4_note || 'Paquete documental completo'}</div>
             </div>
           </div>
           <div className="tl-step">
             <div className="tl-dot" style={{ color: 'var(--check)', borderColor: 'var(--check)', background: 'rgba(61,214,140,.1)', fontSize: '1.1rem' }}>✓</div>
             <div className="tl-content">
-              <div className="tl-title" style={{ color: 'var(--check)', fontSize: '1.35rem' }}>APROBADO ✓</div>
-              <div className="tl-note">Licencia en mano · Inicio inmediato</div>
+              <div className="tl-title" style={{ color: 'var(--check)', fontSize: '1.35rem' }}>{diferencial?.step_5_title || 'APROBADO ✓'}</div>
+              <div className="tl-note">{diferencial?.step_5_note || 'Licencia en mano · Inicio inmediato'}</div>
             </div>
           </div>
         </div>
@@ -549,7 +558,19 @@ export function BottomNav() {
 }
 
 // Footer
-export function Footer() {
+export function Footer({ contact }: { contact: Contact | null }) {
+  const phone = contact?.phone || '+57 321 4502246';
+  const whatsapp = contact?.whatsapp || '573214502246';
+  const email = contact?.email || 'contacto@estructurarte.co';
+
+  // Format WhatsApp number visually
+  let formattedWhatsapp = whatsapp;
+  if (whatsapp.startsWith('57') && whatsapp.length === 12) {
+    formattedWhatsapp = `+57 ${whatsapp.substring(2, 5)} ${whatsapp.substring(5, 8)} ${whatsapp.substring(8)}`;
+  } else if (!whatsapp.startsWith('+')) {
+    formattedWhatsapp = `+${whatsapp}`;
+  }
+
   return (
     <footer className="footer-v2">
       <div className="footer-grid">
@@ -571,13 +592,15 @@ export function Footer() {
         <div className="footer-col">
           <h4>Contacto</h4>
           <ul className="footer-contact">
-            <li>Tel: +57 321 4502246</li>
-            <li>
-              <a href="https://wa.me/573163195050" target="_blank" rel="noopener noreferrer">
-                WhatsApp: +57 316 319 5050
-              </a>
-            </li>
-            <li>Email: contacto@estructurarte.co</li>
+            {phone && <li>Tel: {phone}</li>}
+            {whatsapp && (
+              <li>
+                <a href={`https://wa.me/${whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer">
+                  WhatsApp: {formattedWhatsapp}
+                </a>
+              </li>
+            )}
+            {email && <li>Email: {email}</li>}
           </ul>
         </div>
         
