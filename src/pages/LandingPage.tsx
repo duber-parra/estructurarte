@@ -115,6 +115,7 @@ export default function LandingPage() {
             stat_time: '−50%',
             stat_experience: '15+',
             ticker_text: 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS',
+            show_portfolio: true,
             updated_at: new Date().toISOString()
           };
         }
@@ -125,6 +126,7 @@ export default function LandingPage() {
         finalSettings.stat_time = finalSettings.stat_time || '−50%';
         finalSettings.stat_experience = finalSettings.stat_experience || '15+';
         finalSettings.ticker_text = finalSettings.ticker_text || 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS';
+        finalSettings.show_portfolio = finalSettings.show_portfolio !== false;
       }
       setSettings(finalSettings);
     } catch (error) {
@@ -171,7 +173,7 @@ export default function LandingPage() {
         <DiferencialSection diferencial={diferencial} />
       )}
       <ConfianzaSection engineer={engineer} settings={settings} />
-      {images.length > 0 && <GallerySection images={images} />}
+      {settings?.show_portfolio !== false && images.length > 0 && <GallerySection images={images} />}
       {faqs.length > 0 && <FAQSection faqs={faqs} />}
       <CTAFinalSection contact={contact} />
       <MobileCTA contact={contact} />

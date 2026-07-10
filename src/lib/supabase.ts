@@ -80,6 +80,7 @@ export interface Settings {
   stat_time: string;
   stat_experience: string;
   ticker_text: string;
+  show_portfolio?: boolean;
   updated_at: string;
 }
 

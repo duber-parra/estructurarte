@@ -120,6 +120,7 @@ export default function AdminPanel() {
           stat_time: '−50%',
           stat_experience: '15+',
           ticker_text: 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS',
+          show_portfolio: true,
           updated_at: new Date().toISOString()
         };
       }
@@ -130,6 +131,7 @@ export default function AdminPanel() {
       finalSettings.stat_time = finalSettings.stat_time || '−50%';
       finalSettings.stat_experience = finalSettings.stat_experience || '15+';
       finalSettings.ticker_text = finalSettings.ticker_text || 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS';
+      finalSettings.show_portfolio = finalSettings.show_portfolio !== false;
     }
     setSettings(finalSettings);
 
@@ -283,6 +285,7 @@ export default function AdminPanel() {
           stat_time: settings.stat_time,
           stat_experience: settings.stat_experience,
           ticker_text: settings.ticker_text,
+          show_portfolio: settings.show_portfolio,
           updated_at: new Date().toISOString()
         }).eq('id', settings.id);
         if (error) {
@@ -870,6 +873,25 @@ export default function AdminPanel() {
           {currentPanel === 'gallery' && (
             <div className="panel active">
               <div className="section-h"><h2>Portafolio / Imágenes</h2></div>
+
+              {settings && (
+                <div className="card" style={{ marginBottom: '1.25rem' }}>
+                  <div className="card-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                    Visibilidad del Portafolio
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', fontFamily: 'var(--FM)', fontSize: '0.85rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={settings.show_portfolio ?? true}
+                      onChange={(e) => setSettings({ ...settings, show_portfolio: e.target.checked })}
+                      style={{ width: 'auto', margin: 0 }}
+                    />
+                    Mostrar sección de portafolio en el sitio público
+                  </label>
+                </div>
+              )}
+
               <div className="card">
                 <div className="card-title">
                   <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
