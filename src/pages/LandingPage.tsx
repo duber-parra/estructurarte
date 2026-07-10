@@ -1,0 +1,123 @@
+import { useEffect, useState } from 'react';
+import { supabase, Hero, Service, Engineer, FAQ, Image, Contact, SEO } from '../lib/supabase';
+import { loadAndApplyTheme } from '../lib/theme';
+import Navigation from '../components/landing/Navigation';
+import HeroSection from '../components/landing/HeroSection';
+import TickerBand from '../components/landing/TickerBand';
+import ServicesSection from '../components/landing/ServicesSection';
+import CopySection from '../components/landing/CopySection';
+import DiferencialSection from '../components/landing/DiferencialSection';
+import ConfianzaSection from '../components/landing/ConfianzaSection';
+import GallerySection from '../components/landing/GallerySection';
+import FAQSection from '../components/landing/FAQSection';
+import CTAFinalSection from '../components/landing/CTAFinalSection';
+import MobileCTA from '../components/landing/MobileCTA';
+import BottomNav from '../components/landing/BottomNav';
+import Footer from '../components/landing/Footer';
+import '../styles/landing.css';
+
+export default function LandingPage() {
+  const [hero, setHero] = useState<Hero | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
+  const [engineer, setEngineer] = useState<Engineer | null>(null);
+  const [faqs, setFaqs] = useState<FAQ[]>([]);
+  const [images, setImages] = useState<Image[]>([]);
+  const [contact, setContact] = useState<Contact | null>(null);
+  const [seo, setSeo] = useState<SEO | null>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    loadAndApplyTheme();
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = setTimeout(() => {
+      const fuObs = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add('vis');
+              fuObs.unobserve(e.target);
+            }
+          });
+        },
+        { threshold: 0.05 }
+      );
+      document.querySelectorAll('.fu').forEach((el) => fuObs.observe(el));
+      return () => fuObs.disconnect();
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [loaded]);
+
+  async function loadData() {
+    try {
+      const [heroRes, servicesRes, engineerRes, faqsRes, imagesRes, contactRes, seoRes] = await Promise.all([
+        supabase.from('cms_hero').select('*').maybeSingle(),
+        supabase.from('cms_services').select('*').order('sort_order'),
+        supabase.from('cms_engineer').select('*').maybeSingle(),
+        supabase.from('cms_faq').select('*').order('sort_order'),
+        supabase.from('cms_images').select('*').order('sort_order'),
+        supabase.from('cms_contact').select('*').maybeSingle(),
+        supabase.from('cms_seo').select('*').maybeSingle(),
+      ]);
+
+      if (heroRes.data) setHero(heroRes.data);
+      if (servicesRes.data) setServices(servicesRes.data);
+      if (engineerRes.data) setEngineer(engineerRes.data);
+      if (faqsRes.data) setFaqs(faqsRes.data);
+      if (imagesRes.data) setImages(imagesRes.data);
+      if (contactRes.data) setContact(contactRes.data);
+      if (seoRes.data) setSeo(seoRes.data);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setLoaded(true);
+    }
+  }
+
+  useEffect(() => {
+    if (!seo) return;
+    if (seo.title) document.title = seo.title;
+    const setMeta = (name: string, content: string, attr: 'name' | 'property' = 'name') => {
+      let el = document.head.querySelector(`meta[${attr}="${name}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, name);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+    if (seo.description) {
+      setMeta('description', seo.description);
+      setMeta('og:description', seo.description, 'property');
+      setMeta('twitter:description', seo.description);
+    }
+    if (seo.title) {
+      setMeta('og:title', seo.title, 'property');
+      setMeta('twitter:title', seo.title);
+    }
+    const ogImage = seo.og_image_url || 'https://i.postimg.cc/JnWGtMmK/Cn-P-09072026-232507.png';
+    setMeta('og:image', ogImage, 'property');
+    setMeta('twitter:image', ogImage);
+  }, [seo]);
+
+  return (
+    <div className="landing-page">
+      <Navigation />
+      <HeroSection hero={hero} />
+      <TickerBand />
+      <ServicesSection services={services} />
+      <CopySection />
+      <DiferencialSection />
+      <ConfianzaSection engineer={engineer} />
+      <GallerySection images={images} />
+      <FAQSection faqs={faqs} />
+      <CTAFinalSection contact={contact} />
+      <MobileCTA contact={contact} />
+      <BottomNav />
+      <Footer />
+    </div>
+  );
+}
