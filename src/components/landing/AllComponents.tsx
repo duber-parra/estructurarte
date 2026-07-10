@@ -1,9 +1,22 @@
-import { Hero, Service, Engineer, FAQ, Image, Contact } from '../../lib/supabase';
+import { Hero, Service, Engineer, FAQ, Image, Contact, Settings } from '../../lib/supabase';
 import { useState, useEffect, useRef } from 'react';
 
 // Hero Section
-export function HeroSection({ hero }: { hero: Hero | null }) {
+export function HeroSection({ hero, settings }: { hero: Hero | null; settings: Settings | null }) {
   const lines = hero?.headline?.split('\n') || ['CONSTRUYE', 'EN LA MITAD', 'DEL TIEMPO.'];
+
+  // Parse stats
+  const projects = settings?.stat_projects || '+500.';
+  const rejections = settings?.stat_rejections || '0%';
+  const time = settings?.stat_time || '−50%';
+
+  // Format suffix extraction
+  const projectsNum = projects.replace(/[^0-9+-]/g, '');
+  const projectsSuff = projects.replace(/[0-9+-]/g, '');
+  const rejectionsNum = rejections.replace(/[^0-9+-]/g, '');
+  const rejectionsSuff = rejections.replace(/[0-9+-]/g, '');
+  const timeNum = time.replace(/[^0-9+-−]/g, '');
+  const timeSuff = time.replace(/[0-9+-−]/g, '');
 
   return (
     <section id="hero">
@@ -35,9 +48,9 @@ export function HeroSection({ hero }: { hero: Hero | null }) {
         </a>
       </div>
       <div className="h-stats ha ha4">
-        <div><div className="hs-n">+500<span>.</span></div><div className="hs-l">Proyectos Aprobados</div></div>
-        <div><div className="hs-n">0<span>%</span></div><div className="hs-l">Rechazos en Curaduría</div></div>
-        <div><div className="hs-n">−50<span>%</span></div><div className="hs-l">Tiempo vs Tradicional</div></div>
+        <div><div className="hs-n">{projectsNum}<span>{projectsSuff}</span></div><div className="hs-l">Proyectos Aprobados</div></div>
+        <div><div className="hs-n">{rejectionsNum}<span>{rejectionsSuff}</span></div><div className="hs-l">Rechazos en Curaduría</div></div>
+        <div><div className="hs-n">{timeNum}<span>{timeSuff}</span></div><div className="hs-l">Tiempo vs Tradicional</div></div>
       </div>
       <div className="scroll-hint">
         <svg viewBox="0 0 24 24" strokeWidth="2">
@@ -50,24 +63,21 @@ export function HeroSection({ hero }: { hero: Hero | null }) {
 }
 
 // Ticker Band
-export function TickerBand() {
+export function TickerBand({ settings }: { settings: Settings | null }) {
+  const rawText = settings?.ticker_text || 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS';
+  const items = rawText.split(';').map(item => item.trim()).filter(Boolean);
+
   return (
     <div className="ticker-band" aria-hidden="true">
       <div className="ticker-inner">
         {Array(4).fill(null).map((_, i) => (
           <span key={i} style={{ display: 'contents' }}>
-            <span>NSR-10 CERTIFICADO</span>
-            <span className="td">◆</span>
-            <span>DISEÑO BIM + CNC</span>
-            <span className="td">◆</span>
-            <span>CERO RECHAZOS EN CURADURÍA</span>
-            <span className="td">◆</span>
-            <span>ENTREGA EN LA MITAD DEL TIEMPO</span>
-            <span className="td">◆</span>
-            <span>CONEXIONES APERNADAS ASTM</span>
-            <span className="td">◆</span>
-            <span>CIMENTACIONES LIGERAS</span>
-            <span className="td">◆</span>
+            {items.map((item, idx) => (
+              <span key={idx} style={{ display: 'contents' }}>
+                <span>{item}</span>
+                <span className="td">◆</span>
+              </span>
+            ))}
           </span>
         ))}
       </div>
@@ -295,26 +305,42 @@ export function DiferencialSection() {
 }
 
 // Confianza Section
-export function ConfianzaSection({ engineer }: { engineer: Engineer | null }) {
+export function ConfianzaSection({ engineer, settings }: { engineer: Engineer | null; settings: Settings | null }) {
+  // Parse stats
+  const projects = settings?.stat_projects || '+500.';
+  const rejections = settings?.stat_rejections || '0%';
+  const time = settings?.stat_time || '−50%';
+  const experience = settings?.stat_experience || '15+';
+
+  // Format suffix extraction
+  const projectsNum = projects.replace(/[^0-9+-]/g, '');
+  const projectsSuff = projects.replace(/[0-9+-]/g, '');
+  const rejectionsNum = rejections.replace(/[^0-9+-]/g, '');
+  const rejectionsSuff = rejections.replace(/[0-9+-]/g, '');
+  const timeNum = time.replace(/[^0-9+-−]/g, '');
+  const timeSuff = time.replace(/[0-9+-−]/g, '');
+  const experienceNum = experience.replace(/[^0-9+-]/g, '');
+  const experienceSuff = experience.replace(/[0-9+-]/g, '');
+
   return (
     <section id="confianza">
       <div className="sl fu">Prueba Social</div>
       <h2 className="st fu d1">NÚMEROS<br/>REALES.</h2>
       <div className="trust-grid fu d2">
         <div className="trust-card">
-          <div className="trust-num">+500<span>.</span></div>
+          <div className="trust-num">{projectsNum}<span>{projectsSuff}</span></div>
           <div className="trust-lbl">Proyectos Aprobados</div>
         </div>
         <div className="trust-card">
-          <div className="trust-num">0<span>%</span></div>
+          <div className="trust-num">{rejectionsNum}<span>{rejectionsSuff}</span></div>
           <div className="trust-lbl">Tasa de Rechazo</div>
         </div>
         <div className="trust-card">
-          <div className="trust-num">−50<span>%</span></div>
+          <div className="trust-num">{timeNum}<span>{timeSuff}</span></div>
           <div className="trust-lbl">Tiempo vs Mampostería</div>
         </div>
         <div className="trust-card">
-          <div className="trust-num">15<span>+</span></div>
+          <div className="trust-num">{experienceNum}<span>{experienceSuff}</span></div>
           <div className="trust-lbl">Años de Experiencia</div>
         </div>
       </div>

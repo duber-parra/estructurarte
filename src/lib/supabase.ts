@@ -75,6 +75,11 @@ export interface Settings {
   secondary_color: string;
   bg_color?: string;
   text_color?: string;
+  stat_projects: string;
+  stat_rejections: string;
+  stat_time: string;
+  stat_experience: string;
+  ticker_text: string;
   updated_at: string;
 }
 

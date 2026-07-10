@@ -88,9 +88,21 @@ export default function LandingPage() {
             id: 'local',
             primary_color: '#d4a853',
             secondary_color: '#1e2530',
+            stat_projects: '+500',
+            stat_rejections: '0%',
+            stat_time: '−50%',
+            stat_experience: '15+',
+            ticker_text: 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS',
             updated_at: new Date().toISOString()
           };
         }
+      }
+      if (finalSettings) {
+        finalSettings.stat_projects = finalSettings.stat_projects || '+500';
+        finalSettings.stat_rejections = finalSettings.stat_rejections || '0%';
+        finalSettings.stat_time = finalSettings.stat_time || '−50%';
+        finalSettings.stat_experience = finalSettings.stat_experience || '15+';
+        finalSettings.ticker_text = finalSettings.ticker_text || 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS';
       }
       setSettings(finalSettings);
     } catch (error) {
@@ -129,12 +141,12 @@ export default function LandingPage() {
   return (
     <div className="landing-page">
       <Navigation />
-      <HeroSection hero={hero} />
-      <TickerBand />
+      <HeroSection hero={hero} settings={settings} />
+      <TickerBand settings={settings} />
       <ServicesSection services={services} />
       <CopySection />
       <DiferencialSection />
-      <ConfianzaSection engineer={engineer} />
+      <ConfianzaSection engineer={engineer} settings={settings} />
       <GallerySection images={images} />
       <FAQSection faqs={faqs} />
       <CTAFinalSection contact={contact} />

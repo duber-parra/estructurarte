@@ -95,9 +95,21 @@ export default function AdminPanel() {
           id: 'local',
           primary_color: '#d4a853',
           secondary_color: '#1e2530',
+          stat_projects: '+500',
+          stat_rejections: '0%',
+          stat_time: '−50%',
+          stat_experience: '15+',
+          ticker_text: 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS',
           updated_at: new Date().toISOString()
         };
       }
+    }
+    if (finalSettings) {
+      finalSettings.stat_projects = finalSettings.stat_projects || '+500';
+      finalSettings.stat_rejections = finalSettings.stat_rejections || '0%';
+      finalSettings.stat_time = finalSettings.stat_time || '−50%';
+      finalSettings.stat_experience = finalSettings.stat_experience || '15+';
+      finalSettings.ticker_text = finalSettings.ticker_text || 'NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA;ENTREGA EN LA MITAD DEL TIEMPO;CONEXIONES APERNADAS ASTM;CIMENTACIONES LIGERAS';
     }
     setSettings(finalSettings);
 
@@ -244,6 +256,11 @@ export default function AdminPanel() {
         const { error } = await supabase.from('cms_settings').update({
           primary_color: settings.primary_color,
           secondary_color: settings.secondary_color,
+          stat_projects: settings.stat_projects,
+          stat_rejections: settings.stat_rejections,
+          stat_time: settings.stat_time,
+          stat_experience: settings.stat_experience,
+          ticker_text: settings.ticker_text,
           updated_at: new Date().toISOString()
         }).eq('id', settings.id);
         if (error) {
@@ -1023,6 +1040,63 @@ export default function AdminPanel() {
                   ))}
                 </div>
               </div>
+
+              <div className="card" style={{ marginTop: '1.5rem' }}>
+                <div className="card-title">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                  Estadísticas y Textos Dinámicos
+                </div>
+                <div className="g2">
+                  <div>
+                    <label>Proyectos Aprobados (e.g. +500.)</label>
+                    <input
+                      type="text"
+                      value={settings.stat_projects}
+                      onChange={(e) => setSettings({ ...settings, stat_projects: e.target.value })}
+                      placeholder="+500."
+                    />
+                  </div>
+                  <div>
+                    <label>Tasa de Rechazos (e.g. 0%)</label>
+                    <input
+                      type="text"
+                      value={settings.stat_rejections}
+                      onChange={(e) => setSettings({ ...settings, stat_rejections: e.target.value })}
+                      placeholder="0%"
+                    />
+                  </div>
+                </div>
+                <div className="g2" style={{ marginTop: '1rem' }}>
+                  <div>
+                    <label>Ahorro de Tiempo (e.g. −50%)</label>
+                    <input
+                      type="text"
+                      value={settings.stat_time}
+                      onChange={(e) => setSettings({ ...settings, stat_time: e.target.value })}
+                      placeholder="−50%"
+                    />
+                  </div>
+                  <div>
+                    <label>Años de Experiencia (e.g. 15+)</label>
+                    <input
+                      type="text"
+                      value={settings.stat_experience}
+                      onChange={(e) => setSettings({ ...settings, stat_experience: e.target.value })}
+                      placeholder="15+"
+                    />
+                  </div>
+                </div>
+
+                <label style={{ marginTop: '1.5rem' }}>Textos de la Barra Deslizante (Ticker) (Separa con punto y coma ';')</label>
+                <textarea
+                  rows={3}
+                  value={settings.ticker_text}
+                  onChange={(e) => setSettings({ ...settings, ticker_text: e.target.value })}
+                  placeholder="NSR-10 CERTIFICADO;DISEÑO BIM + CNC;CERO RECHAZOS EN CURADURÍA..."
+                />
+                <p className="hint">Escribe cada frase y sepárala con un punto y coma (;). Se mostrarán deslizándose en bucle en la barra superior.</p>
+              </div>
+
             </div>
           )}
         </div>

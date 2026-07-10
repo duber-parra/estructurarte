@@ -15,12 +15,12 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
   const editableRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
-  // Sync value to editable div only when not focused to avoid cursor reset
+  // Sync value to editable div only when not focused or when switching mode to avoid cursor reset
   useEffect(() => {
     if (editableRef.current && !isFocused) {
       editableRef.current.innerHTML = value || '';
     }
-  }, [value, isFocused]);
+  }, [value, isFocused, mode]);
 
   function handleEditableInput(e: React.FormEvent<HTMLDivElement>) {
     const html = e.currentTarget.innerHTML;
@@ -127,6 +127,7 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
         <div style={{ display: 'flex', gap: '0.35rem' }}>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => mode === 'visual' ? executeCommand('bold') : insertTag('<strong>', '</strong>')}
             title="Negrita"
             className="toolbar-btn"
@@ -145,6 +146,7 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => mode === 'visual' ? executeCommand('italic') : insertTag('<em>', '</em>')}
             title="Cursiva"
             className="toolbar-btn"
@@ -163,6 +165,7 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => mode === 'visual' ? executeCommand('insertHTML', '<br>') : insertTag('<br />', '')}
             title="Salto de Línea"
             className="toolbar-btn"
@@ -180,6 +183,7 @@ export default function HtmlTextarea({ value, onChange, placeholder, rows = 4, l
           </button>
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => mode === 'visual' ? executeCommand('insertUnorderedList') : insertTag('<li>', '</li>')}
             title="Lista / Viñeta"
             className="toolbar-btn"
