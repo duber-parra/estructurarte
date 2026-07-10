@@ -126,7 +126,7 @@ function AdminLogin({ onAuth }: { onAuth: () => void }) {
     return `${sec}s`;
   }
 
-  const isLocked = !!(lockoutEnd && timeLeft > 0);
+  const isLocked = !!(lockoutEnd && lockoutEnd > Date.now());
 
   return (
     <div style={{
