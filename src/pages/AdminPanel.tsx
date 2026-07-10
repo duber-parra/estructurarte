@@ -32,6 +32,8 @@ export default function AdminPanel() {
   const [currentPanel, setCurrentPanel] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [loadedData, setLoadedData] = useState<any>(null);
 
   const [hero, setHero] = useState<Hero | null>(null);
   const [services, setServices] = useState<Service[]>([]);
@@ -63,7 +65,40 @@ export default function AdminPanel() {
     if (imagesRes.data) setImages(imagesRes.data);
     if (contactRes.data) setContact(contactRes.data);
     if (seoRes.data) setSeo(seoRes.data);
+
+    setLoadedData({
+      hero: heroRes.data,
+      services: servicesRes.data,
+      engineer: engineerRes.data,
+      faqs: faqsRes.data,
+      contact: contactRes.data,
+      seo: seoRes.data,
+    });
+    setDirty(false);
   }
+
+  useEffect(() => {
+    if (!loadedData) return;
+    const changed =
+      JSON.stringify(hero) !== JSON.stringify(loadedData.hero) ||
+      JSON.stringify(services) !== JSON.stringify(loadedData.services) ||
+      JSON.stringify(engineer) !== JSON.stringify(loadedData.engineer) ||
+      JSON.stringify(faqs) !== JSON.stringify(loadedData.faqs) ||
+      JSON.stringify(contact) !== JSON.stringify(loadedData.contact) ||
+      JSON.stringify(seo) !== JSON.stringify(loadedData.seo);
+    setDirty(changed);
+  }, [hero, services, engineer, faqs, contact, seo, loadedData]);
+
+  useEffect(() => {
+    function handleBeforeUnload(e: BeforeUnloadEvent) {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [dirty]);
 
   async function saveAll() {
     setSaving(true);
@@ -111,10 +146,34 @@ export default function AdminPanel() {
       if (error) errors.push(`SEO: ${error.message}`);
     }
 
+    for (const svc of services) {
+      const { error } = await supabase.from('cms_services').update({
+        name: svc.name,
+        tag: svc.tag,
+        icon_key: svc.icon_key,
+        description: svc.description,
+        sort_order: svc.sort_order,
+        updated_at: new Date().toISOString()
+      }).eq('id', svc.id);
+      if (error) errors.push(`Servicio "${svc.name}": ${error.message}`);
+    }
+
+    for (const faq of faqs) {
+      const { error } = await supabase.from('cms_faq').update({
+        question: faq.question,
+        answer: faq.answer,
+        sort_order: faq.sort_order,
+        updated_at: new Date().toISOString()
+      }).eq('id', faq.id);
+      if (error) errors.push(`FAQ "${faq.question}": ${error.message}`);
+    }
+
+    setDirty(false);
     setSaving(false);
     if (errors.length) {
       showToast(`⚠ ${errors[0]}`);
     } else {
+      setLoadedData({ hero, services, engineer, faqs, contact, seo });
       showToast('✓ Cambios guardados correctamente');
     }
   }
@@ -302,7 +361,7 @@ export default function AdminPanel() {
           <div className="topbar-actions">
             <button className="save-btn" onClick={saveAll} disabled={saving}>
               <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando...' : dirty ? 'Guardar *' : 'Guardar'}
             </button>
           </div>
         </div>
