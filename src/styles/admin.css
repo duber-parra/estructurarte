@@ -740,3 +740,120 @@ textarea {
   font-size: 0.85rem;
 }
 
+/* Custom Confirm Modal */
+.confirm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(8px);
+  animation: modal-fade-in 0.2s ease-out;
+}
+
+.confirm-modal-card {
+  background: #111114;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  padding: 2rem;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+  animation: modal-slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-modal-card h3 {
+  font-family: var(--F0);
+  font-size: 1.2rem;
+  color: var(--text);
+  margin-bottom: 0.8rem;
+  letter-spacing: 0.04em;
+}
+
+.confirm-modal-card p {
+  font-family: var(--FM);
+  font-size: 0.85rem;
+  color: var(--dim);
+  line-height: 1.6;
+  margin-bottom: 1.8rem;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.confirm-modal-actions button {
+  font-family: var(--FM);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.confirm-btn-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--dim);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.confirm-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text);
+}
+
+.confirm-btn-danger {
+  background: #e05c3a;
+  color: #fff;
+  border: none;
+}
+
+.confirm-btn-danger:hover {
+  background: #f26d4b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(224, 92, 58, 0.3);
+}
+
+/* Modern Delete Icon Button */
+.delete-card-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(224, 92, 58, 0.08);
+  color: #e05c3a;
+  border: 1px solid rgba(224, 92, 58, 0.2);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-card-btn:hover {
+  background: #e05c3a;
+  color: #fff;
+  border-color: #e05c3a;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(224, 92, 58, 0.2);
+}
+
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modal-slide-in {
+  from { transform: translateY(12px) scale(0.97); }
+  to { transform: translateY(0) scale(1); }
+}
+

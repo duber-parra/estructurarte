@@ -48,6 +48,13 @@ export default function AdminPanel() {
   const [draggedServiceIndex, setDraggedServiceIndex] = useState<number | null>(null);
   const [draggedFaqIndex, setDraggedFaqIndex] = useState<number | null>(null);
 
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   useEffect(() => {
     if (settings) {
       document.documentElement.style.setProperty('--accent', settings.primary_color);
@@ -270,9 +277,15 @@ export default function AdminPanel() {
   }
 
   async function deleteImage(id: string) {
-    if (!confirm('¿Eliminar imagen?')) return;
-    await supabase.from('cms_images').delete().eq('id', id);
-    setImages(images.filter(img => img.id !== id));
+    setConfirmModal({
+      isOpen: true,
+      title: '¿Eliminar imagen?',
+      message: '¿Estás seguro de que deseas eliminar esta imagen del portafolio?',
+      onConfirm: async () => {
+        await supabase.from('cms_images').delete().eq('id', id);
+        setImages(images.filter(img => img.id !== id));
+      }
+    });
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -698,16 +711,22 @@ export default function AdminPanel() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
                           <span style={{ fontSize: '0.72rem', color: 'var(--dim)', fontFamily: 'var(--FM)' }}>Posición: {svc.sort_order}</span>
                           <button
-                            className="btn-sm"
                             type="button"
-                            onClick={async () => {
-                              if (!confirm('¿Eliminar servicio?')) return;
-                              await supabase.from('cms_services').delete().eq('id', svc.id);
-                              setServices(services.filter(s => s.id !== svc.id).map((s, idx) => ({ ...s, sort_order: idx + 1 })));
+                            className="delete-card-btn"
+                            onClick={() => {
+                              setConfirmModal({
+                                isOpen: true,
+                                title: '¿Eliminar servicio?',
+                                message: `¿Estás seguro de que deseas eliminar el servicio "${svc.name || 'este servicio'}"?`,
+                                onConfirm: async () => {
+                                  await supabase.from('cms_services').delete().eq('id', svc.id);
+                                  setServices(services.filter(s => s.id !== svc.id).map((s, idx) => ({ ...s, sort_order: idx + 1 })));
+                                }
+                              });
                             }}
-                            style={{ background: 'var(--danger)', color: '#fff', border: 'none', padding: '.4rem .8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '.75rem' }}
+                            title="Eliminar servicio"
                           >
-                            Eliminar
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                           </button>
                         </div>
                       </div>
@@ -786,14 +805,21 @@ export default function AdminPanel() {
                           <span style={{ fontSize: '0.72rem', color: 'var(--dim)', fontFamily: 'var(--FM)' }}>Posición: {faq.sort_order}</span>
                           <button
                             type="button"
-                            onClick={async () => {
-                              if (!confirm('¿Eliminar pregunta?')) return;
-                              await supabase.from('cms_faq').delete().eq('id', faq.id);
-                              setFaqs(faqs.filter(f => f.id !== faq.id).map((f, idx) => ({ ...f, sort_order: idx + 1 })));
+                            className="delete-card-btn"
+                            onClick={() => {
+                              setConfirmModal({
+                                isOpen: true,
+                                title: '¿Eliminar pregunta?',
+                                message: `¿Estás seguro de que deseas eliminar la pregunta "${faq.question || 'esta pregunta'}"?`,
+                                onConfirm: async () => {
+                                  await supabase.from('cms_faq').delete().eq('id', faq.id);
+                                  setFaqs(faqs.filter(f => f.id !== faq.id).map((f, idx) => ({ ...f, sort_order: idx + 1 })));
+                                }
+                              });
                             }}
-                            style={{ background: 'var(--danger)', color: '#fff', border: 'none', padding: '.4rem .8rem', borderRadius: '6px', cursor: 'pointer', fontSize: '.75rem' }}
+                            title="Eliminar pregunta"
                           >
-                            Eliminar
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                           </button>
                         </div>
                       </div>
@@ -960,6 +986,34 @@ export default function AdminPanel() {
           )}
         </div>
       </div>
+
+      {confirmModal && confirmModal.isOpen && (
+        <div className="confirm-modal-overlay">
+          <div className="confirm-modal-card">
+            <h3>{confirmModal.title}</h3>
+            <p>{confirmModal.message}</p>
+            <div className="confirm-modal-actions">
+              <button
+                type="button"
+                className="confirm-btn-cancel"
+                onClick={() => setConfirmModal(null)}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="confirm-btn-danger"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+              >
+                Aceptar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="toast" id="toast">
         <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
