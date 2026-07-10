@@ -45,10 +45,7 @@ export default function AdminPanel() {
   const [seo, setSeo] = useState<SEO | null>(null);
   const [settings, setSettings] = useState<Settings | null>(null);
 
-  const [draggedServiceIndex, setDraggedServiceIndex] = useState<number | null>(null);
-  const [draggedOverServiceIndex, setDraggedOverServiceIndex] = useState<number | null>(null);
-  const [draggedFaqIndex, setDraggedFaqIndex] = useState<number | null>(null);
-  const [draggedOverFaqIndex, setDraggedOverFaqIndex] = useState<number | null>(null);
+
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -129,54 +126,60 @@ export default function AdminPanel() {
     setDirty(changed);
   }, [hero, services, engineer, faqs, contact, seo, settings, loadedData]);
 
-  // Drag and Drop for Services
-  function handleServiceDragStart(index: number) {
-    setDraggedServiceIndex(index);
-  }
-
-  function handleServiceDragOver(e: React.DragEvent, index: number) {
-    e.preventDefault();
-    if (draggedServiceIndex === index) return;
-    setDraggedOverServiceIndex(index);
-  }
-
-  function handleServiceDrop(index: number) {
-    if (draggedServiceIndex === null) return;
+  // Reordering functions for Services
+  function moveService(index: number, direction: number) {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= services.length) return;
     const updated = [...services];
-    const [draggedItem] = updated.splice(draggedServiceIndex, 1);
-    updated.splice(index, 0, draggedItem);
+    const temp = updated[index];
+    updated[index] = updated[nextIndex];
+    updated[nextIndex] = temp;
+    
     const reordered = updated.map((item, idx) => ({
       ...item,
       sort_order: idx + 1
     }));
     setServices(reordered);
-    setDraggedServiceIndex(null);
-    setDraggedOverServiceIndex(null);
   }
 
-  // Drag and Drop for FAQs
-  function handleFaqDragStart(index: number) {
-    setDraggedFaqIndex(index);
+  function reorderServiceTo(fromIndex: number, toIndex: number) {
+    if (toIndex < 0 || toIndex >= services.length) return;
+    const updated = [...services];
+    const [item] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, item);
+    const reordered = updated.map((s, idx) => ({
+      ...s,
+      sort_order: idx + 1
+    }));
+    setServices(reordered);
   }
 
-  function handleFaqDragOver(e: React.DragEvent, index: number) {
-    e.preventDefault();
-    if (draggedFaqIndex === index) return;
-    setDraggedOverFaqIndex(index);
-  }
-
-  function handleFaqDrop(index: number) {
-    if (draggedFaqIndex === null) return;
+  // Reordering functions for FAQs
+  function moveFaq(index: number, direction: number) {
+    const nextIndex = index + direction;
+    if (nextIndex < 0 || nextIndex >= faqs.length) return;
     const updated = [...faqs];
-    const [draggedItem] = updated.splice(draggedFaqIndex, 1);
-    updated.splice(index, 0, draggedItem);
+    const temp = updated[index];
+    updated[index] = updated[nextIndex];
+    updated[nextIndex] = temp;
+
     const reordered = updated.map((item, idx) => ({
       ...item,
       sort_order: idx + 1
     }));
     setFaqs(reordered);
-    setDraggedFaqIndex(null);
-    setDraggedOverFaqIndex(null);
+  }
+
+  function reorderFaqTo(fromIndex: number, toIndex: number) {
+    if (toIndex < 0 || toIndex >= faqs.length) return;
+    const updated = [...faqs];
+    const [item] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, item);
+    const reordered = updated.map((f, idx) => ({
+      ...f,
+      sort_order: idx + 1
+    }));
+    setFaqs(reordered);
   }
 
   useEffect(() => {
@@ -661,36 +664,16 @@ export default function AdminPanel() {
               <div className="card">
                 <div className="card-title">
                   <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                  Servicios del sitio (Arrastra para reordenar)
+                  Servicios del sitio (Organiza por numeración)
                 </div>
                 
                 <div className="drag-list">
                   {services.map((svc, index) => (
                     <div
                       key={svc.id}
-                      className={`draggable-card ${draggedServiceIndex === index ? 'dragging' : ''} ${draggedOverServiceIndex === index ? 'drag-over' : ''}`}
-                      draggable
-                      onDragStart={(e) => {
-                        const target = e.target as HTMLElement;
-                        if (!target.closest('.drag-handle')) {
-                          e.preventDefault();
-                          return;
-                        }
-                        handleServiceDragStart(index);
-                      }}
-                      onDragOver={(e) => handleServiceDragOver(e, index)}
-                      onDragLeave={() => setDraggedOverServiceIndex(null)}
-                      onDrop={() => handleServiceDrop(index)}
-                      onDragEnd={() => {
-                        setDraggedServiceIndex(null);
-                        setDraggedOverServiceIndex(null);
-                      }}
+                      className="draggable-card"
                     >
-                      <div className="drag-handle">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
-                      </div>
-                      
-                      <div className="draggable-card-content">
+                      <div className="draggable-card-content" style={{ paddingLeft: '1.25rem' }}>
                         <div className="g2">
                           <div>
                             <label>Nombre</label>
@@ -722,7 +705,37 @@ export default function AdminPanel() {
                           onChange={(e) => setServices(services.map(s => s.id === svc.id ? { ...s, description: e.target.value } : s))}
                         />
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--dim)', fontFamily: 'var(--FM)' }}>Posición: {svc.sort_order}</span>
+                          <div className="position-controls">
+                            <button
+                              type="button"
+                              className="pos-btn"
+                              disabled={index === 0}
+                              onClick={() => moveService(index, -1)}
+                              title="Subir"
+                            >
+                              ↑
+                            </button>
+                            <select
+                              value={index + 1}
+                              onChange={(e) => reorderServiceTo(index, parseInt(e.target.value) - 1)}
+                              className="pos-select"
+                              title="Posición"
+                            >
+                              {services.map((_, i) => (
+                                <option key={i} value={i + 1}>#{i + 1}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              className="pos-btn"
+                              disabled={index === services.length - 1}
+                              onClick={() => moveService(index, 1)}
+                              title="Bajar"
+                            >
+                              ↓
+                            </button>
+                          </div>
+
                           <button
                             type="button"
                             className="delete-card-btn"
@@ -775,36 +788,16 @@ export default function AdminPanel() {
               <div className="card">
                 <div className="card-title">
                   <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  Preguntas frecuentes (Arrastra para reordenar)
+                  Preguntas frecuentes (Organiza por numeración)
                 </div>
                 
                 <div className="drag-list">
                   {faqs.map((faq, index) => (
                     <div
                       key={faq.id}
-                      className={`draggable-card ${draggedFaqIndex === index ? 'dragging' : ''} ${draggedOverFaqIndex === index ? 'drag-over' : ''}`}
-                      draggable
-                      onDragStart={(e) => {
-                        const target = e.target as HTMLElement;
-                        if (!target.closest('.drag-handle')) {
-                          e.preventDefault();
-                          return;
-                        }
-                        handleFaqDragStart(index);
-                      }}
-                      onDragOver={(e) => handleFaqDragOver(e, index)}
-                      onDragLeave={() => setDraggedOverFaqIndex(null)}
-                      onDrop={() => handleFaqDrop(index)}
-                      onDragEnd={() => {
-                        setDraggedFaqIndex(null);
-                        setDraggedOverFaqIndex(null);
-                      }}
+                      className="draggable-card"
                     >
-                      <div className="drag-handle">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
-                      </div>
-                      
-                      <div className="draggable-card-content">
+                      <div className="draggable-card-content" style={{ paddingLeft: '1.25rem' }}>
                         <label>Pregunta</label>
                         <input
                           type="text"
@@ -820,7 +813,37 @@ export default function AdminPanel() {
                           placeholder="Respuesta..."
                         />
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--dim)', fontFamily: 'var(--FM)' }}>Posición: {faq.sort_order}</span>
+                          <div className="position-controls">
+                            <button
+                              type="button"
+                              className="pos-btn"
+                              disabled={index === 0}
+                              onClick={() => moveFaq(index, -1)}
+                              title="Subir"
+                            >
+                              ↑
+                            </button>
+                            <select
+                              value={index + 1}
+                              onChange={(e) => reorderFaqTo(index, parseInt(e.target.value) - 1)}
+                              className="pos-select"
+                              title="Posición"
+                            >
+                              {faqs.map((_, i) => (
+                                <option key={i} value={i + 1}>#{i + 1}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              className="pos-btn"
+                              disabled={index === faqs.length - 1}
+                              onClick={() => moveFaq(index, 1)}
+                              title="Bajar"
+                            >
+                              ↓
+                            </button>
+                          </div>
+
                           <button
                             type="button"
                             className="delete-card-btn"

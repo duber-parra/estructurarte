@@ -892,10 +892,58 @@ textarea {
   pointer-events: none;
 }
 
-/* Drag and Drop Drop-target Highlight */
-.draggable-card.drag-over {
-  border-top: 2px dashed var(--accent) !important;
-  transform: translateY(2px);
-  box-shadow: 0 -4px 12px rgba(212, 168, 83, 0.15);
+/* Sleek Numeric Position Controls */
+.position-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.25rem 0.5rem;
+}
+
+.pos-btn {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.pos-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent);
+}
+
+.pos-btn:disabled {
+  color: var(--dim);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pos-select {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--accent);
+  font-family: var(--FM);
+  font-size: 0.72rem;
+  font-weight: bold;
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.pos-select:hover {
+  border-color: var(--accent);
 }
 
