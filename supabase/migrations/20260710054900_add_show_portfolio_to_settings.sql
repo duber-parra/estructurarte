@@ -3,5 +3,4 @@ ALTER TABLE cms_settings ADD COLUMN IF NOT EXISTS show_portfolio boolean NOT NUL
 
 -- Update the existing settings row
 UPDATE cms_settings
-SET show_portfolio = COALESCE(show_portfolio, true)
-WHERE id = '00000000-0000-0000-0000-000000000001' OR id = 'local';
+SET show_portfolio = COALESCE(show_portfolio, true);
