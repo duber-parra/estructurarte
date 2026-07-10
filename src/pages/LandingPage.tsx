@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { supabase, Hero, Service, Engineer, FAQ, Image, Contact, SEO } from '../lib/supabase';
-import { loadAndApplyTheme } from '../lib/theme';
 import Navigation from '../components/landing/Navigation';
 import HeroSection from '../components/landing/HeroSection';
 import TickerBand from '../components/landing/TickerBand';
@@ -27,7 +26,6 @@ export default function LandingPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    loadAndApplyTheme();
     loadData();
   }, []);
 
@@ -98,7 +96,7 @@ export default function LandingPage() {
       setMeta('og:title', seo.title, 'property');
       setMeta('twitter:title', seo.title);
     }
-    const ogImage = seo.og_image_url || 'https://i.postimg.cc/JnWGtMmK/Cn-P-09072026-232507.png';
+    const ogImage = seo.og_image_url || '/image.png';
     setMeta('og:image', ogImage, 'property');
     setMeta('twitter:image', ogImage);
   }, [seo]);
